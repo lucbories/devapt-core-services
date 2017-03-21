@@ -1,0 +1,28 @@
+{
+  "name": "devapt-core-services",
+  "description": "Devapt core services.",
+  "main": "dist/index.js",
+  "authors": [
+    "Luc BORIES (https://github.com/lucbories)"
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "labs",
+    "plot",
+    "devapt",
+    "feature"
+  ],
+  "homepage": "www.devapt.org",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+  },
+  "resolutions": {
+  }
+}
