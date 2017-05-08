@@ -6,7 +6,7 @@ import T          from 'devapt-core-common/dist/js/utils/types'
 import Executable from 'devapt-core-common/dist/js/base/executable'
 
 
-let context = 'server/executables/executable_command'
+let context = 'services/executables/executable_command'
 
 
 
@@ -34,9 +34,6 @@ export default class ExecutableCommand extends Executable
 		assert(this.store_config.server.is_server, context + ':bad server instance')
 		
 		this.server = this.store_config.server
-		
-		// assert(T.isArray(this.store_config.server_types), context + ':bad server_types array')
-		this.store_config.server_types = ['restify', 'express']
 	}
 	
 	
@@ -51,12 +48,12 @@ export default class ExecutableCommand extends Executable
 		// CHECK SERVER
 		const server_instance = this.server
 		assert(T.isString(server_instance.server_type), context + ':bad server_instance.server_type string')
-		assert(this.store_config.server_types.indexOf(server_instance.server_type) > -1, context + ':server_instance.server_type not valid')
+		// assert(this.store_config.server_types.indexOf(server_instance.server_type) > -1, context + ':server_instance.server_type not valid')
 		// console.log(server_instance, 'server_instance')
 		// console.log(server_instance.server, 'server_instance.server')
 		// assert(T.isObject(server_instance.server), context + ':bad server_instance.server object')
 		assert(T.isObject(server_instance.server) || T.isFunction(server_instance.server), context + ':bad server_instance.server object or function')
 		
-        return Promise.resolve()
+		return Promise.resolve()
 	}
 }

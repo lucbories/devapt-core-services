@@ -4,12 +4,14 @@ import assert from 'assert'
 // COMMON IMPORTS
 import T          from 'devapt-core-common/dist/js/utils/types'
 import Executable from 'devapt-core-common/dist/js/base/executable'
+import {get_runtime}    from 'devapt-core-common/dist/js/base/runtime'
+const runtime = get_runtime()
 
 // SERVER IMPORTS
-import runtime from '../base/runtime'
 
 
-let context = 'server/executables/executable_route'
+let context = 'services/executables/executable_route'
+console.log(context + ':HAS RUNTIME ?' + runtime ? 'yes' : 'no')
 
 
 
@@ -27,7 +29,7 @@ export default class ExecutableRoute extends Executable
      */
 	constructor()
 	{
-		super(context)
+		super(context, runtime.get_logger_manager())
 	}
 	
 	
@@ -42,7 +44,7 @@ export default class ExecutableRoute extends Executable
      */
 	prepare(arg_settings)
 	{
-		// console.log(arg_settings, context + ':arg_settings')
+		// console.log(context + ':prepare:arg_settings', arg_settings)
 		
 		assert( T.isObject(arg_settings), context + ':no given config')
 		this.store_config = arg_settings
@@ -53,9 +55,6 @@ export default class ExecutableRoute extends Executable
 		assert(this.store_config.server.is_server, context + ':bad server instance')
 		
 		this.server = this.store_config.server
-		
-		// assert(T.isArray(this.store_config.server_types), context + ':bad server_types array')
-		this.store_config.server_types = ['restify', 'express']
 	}
     
 	
@@ -70,7 +69,7 @@ export default class ExecutableRoute extends Executable
      */
 	execute(arg_data)
 	{
-		// console.log(this.store_config, context + ':store_config')
+		// console.log(context + ':execute:store_config', this.store_config)
 		
 		// CHECK APPLICATION
 		assert(T.isObject(arg_data), context + ':bad application object')
@@ -83,7 +82,6 @@ export default class ExecutableRoute extends Executable
 		// CHECK SERVER
 		const server_instance = this.server
 		assert(T.isString(server_instance.server_type), context + ':bad server_instance.server_type string')
-		assert(this.store_config.server_types.indexOf(server_instance.server_type) > -1, context + ':server_instance.server_type not valid')
 		assert(T.isObject(server_instance.server) || T.isFunction(server_instance.server), context + ':bad server_instance.server object or function')
 		
 
@@ -98,28 +96,33 @@ export default class ExecutableRoute extends Executable
 		// {
 		for(let cfg_route_index = 0 ; cfg_route_index < cfg_routes.length ; cfg_route_index++)
 		{
+			// GET ROUTE CONFIG
 			let cfg_route = cfg_routes[cfg_route_index]
 			this.debug('loop on cfg_route', cfg_route)
 			assert(T.isObject(cfg_route), context + ':bad cfg_route object')
 			assert(T.isString(cfg_route.route), context + ':bad route string')
 			
-			const app_route = T.isString(application.app_url) ? application.app_url : ''
-			this.debug('app_route', app_route)
+			// GET APPLICATION URL
+			const app_url = T.isString(application.app_url) ? application.app_url : ''
+			this.debug('app_route', app_url)
 			
-			let route = (cfg_route.is_global && cfg_route.is_global == true) ? cfg_route.route : app_route + cfg_route.route
-			route = (route[0] == '/' ? '' : '/') + route
-			
+			// GET ROUTE IS GLOBAL (HAS FULL ROUTE INSIDE)
+			const route_is_global = (T.isBoolean(cfg_route.is_global) && cfg_route.is_global == true)
+
+			// GET APPLICATION ROUTE
+			let app_route = route_is_global ? cfg_route.route : app_url + cfg_route.route
+			app_route = (app_route[0] == '/' ? '' : '/') + app_route
+			cfg_route.full_route = app_route
+
 			// DEBUG
 			// console.log('route=%s, app_route=%s, cfg.route=%s, is_global=%s, cond=%s', route, app_route, cfg_route.route, cfg_route.is_global, (cfg_route.is_global && cfg_route.is_global == true))
 			
-			if ( route.indexOf('.*') > -1 )
+			// GET REGEXP
+			cfg_route.route_regexp = undefined
+			if ( app_route.indexOf('.*') > -1 || app_route.indexOf('$') > -1 || app_route.indexOf('^') > -1 )
 			{
-				route = route.replace('/', '\/')
-				cfg_route.full_route = new RegExp(route)
-			}
-			else
-			{
-				cfg_route.full_route = route
+				// cfg_route.full_route = route_is_global ? app_route : app_url + '/'
+				cfg_route.route_regexp = new RegExp( app_route.replace('/', '\/') )
 			}
 			
 			this.debug('route', cfg_route.full_route.toString())
@@ -128,7 +131,7 @@ export default class ExecutableRoute extends Executable
 			const route_resistering_promise = this.process_route(server_instance, application, cfg_route, arg_data)
 			routes_registering_promises.push(route_resistering_promise)
             
-			this.info('registering route [' + route + '] for application [' + application.$name + ']')
+			this.info('registering route [' + app_route + '] for application [' + application.$name + ']')
 		}
         
 		return Promise.all(routes_registering_promises)
@@ -148,46 +151,36 @@ export default class ExecutableRoute extends Executable
      */
 	process_route(arg_server, arg_application, arg_cfg_route, arg_data)
 	{
+		// DEBUG
 		// console.log(arg_cfg_route, 'arg_cfg_route')
 		
+		// GET ROUTE CALLBACK
 		const route_cb = this.get_route_cb(arg_application, arg_cfg_route, arg_data)
 		if (!route_cb)
 		{
 			console.error('bad route callback', context)
 			return Promise.reject(context + ':process_route:bad route callback')
 		}
+
+		// CHECK SERVER
+		if ( ! T.isObject(arg_server) || ! arg_server.is_server || ! arg_server.is_routable_server )
+		{
+			return Promise.reject(context + ':process_route:bad server type')
+		}
         
+		// ADD ROUTE HANDLER
 		try
 		{
-            // RESTIFY SERVER
-			if (this.store_config.server.is_restify_server)
-            {
-				this.debug('process restify route [%s]', arg_cfg_route.full_route)
-                
-                // TODO Restify route should be: an app assets/ with a route /js/.* and folder should be ./public to serve a file in ./public/assets/js/test.js
-                
-				arg_server.server.get(arg_cfg_route.full_route, route_cb)
-				return Promise.resolve(true)
-			}
-            
-            // EXPRESS SERVER
-			if (this.store_config.server.is_express_server)
-            {
-				this.debug('process express route [%s]', arg_cfg_route.full_route)
-                
-                // TODO Restify route should be: an app assets/ with a route /js and folder should be ./public/assets/js to serve a file in ./public/assets/js/test.js
-                
-				arg_server.server.use(arg_cfg_route.full_route, route_cb)
-				return Promise.resolve(true)
-			}
+			arg_server.add_get_route(arg_cfg_route, route_cb)
+
+			return Promise.resolve(true)
 		}
 		catch(e)
 		{
 			console.error(e, context)
-			return Promise.reject(context + ':process_route:' + e.toString())
+			const cfg_route_str = JSON.stringify(arg_cfg_route)
+			return Promise.reject(context + ':process_route:' + e.toString() + ' for route config=[' + cfg_route_str + ']')
 		}
-        
-		return Promise.reject(context + ':process_route:bad server type')
 	}
     
 

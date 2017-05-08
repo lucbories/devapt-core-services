@@ -1,5 +1,5 @@
 {
-  "name": "devapt",
+  "name": "devapt-core-services",
   "version": "2.0.0",
   "description": "Developpers Application Toolkit - build application (backend, frontend, RESTfull, API, distributed nodes, reactive...) from configuration",
   "author": {
@@ -11,12 +11,12 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lucbories/devapt.git"
+    "url": "git+https://github.com/lucbories/devapt-core-services.git"
   },
   "bugs": {
-    "url": "git+https://github.com/lucbories/devapt/issues"
+    "url": "git+https://github.com/lucbories/devapt-core-services/issues"
   },
-  "homepage": "https://github.com/lucbories/devapt#readme.md",
+  "homepage": "https://github.com/lucbories/devapt-core-services#readme.md",
   "main": "dist/index.js",
   "engines": {
     "node": ">=4.4.4"
@@ -26,24 +26,7 @@
   },
   "scripts": {
     "build": "gulp",
-    "test": "mocha --recursive --reporter spec --compilers js:babel-register src/test",
-    "test:common:base": "mocha --recursive --reporter spec --compilers js:babel-register src/test/unit/common/base",
-    "test:common:cache": "mocha --recursive --reporter spec --compilers js:babel-register src/test/unit/common/cache",
-    "test:common:datas": "mocha --recursive --reporter spec --compilers js:babel-register src/test/unit/common/datas",
-    "test:common:rendering": "mocha --recursive --reporter spec --compilers js:babel-register src/test/unit/common/rendering",
-    "test:common:topology": "mocha --recursive --reporter spec --compilers js:babel-register src/test/unit/common/topology",
-    "test:common:utils": "mocha --recursive --reporter spec --compilers js:babel-register src/test/unit/common/utils",
-    "test:empty": "mocha --reporter spec --compilers js:babel-register",
-    "test:watch": "npm run test -- --watch",
-    "test:unit:common": "npm run test:empty -- src/test/unit/common/base",
-    "postversion": "unix2dos package.json",
-    "commit": "unix2dos package.json && git status && pause && git commit -am ",
-    "patch": "npm version patch && unix2dos package.json && git status && pause && git commit -am ",
-    "minor": "npm version minor && unix2dos package.json && git status && pause && git commit -am ",
-    "major": "npm version major && unix2dos package.json && git status && pause && git commit -am ",
-    "push-dev": "git push devapt develop",
-    "merge": "git checkout master && git merge develop && git push devapt master && git checkout develop",
-    "release": "git push devapt develop && git checkout master && git merge develop && git push devapt master && git checkout develop"
+    "test": "mocha --recursive --reporter spec --compilers js:babel-register src/js/test"
   },
   "browser": [
     "sequelize",

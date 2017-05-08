@@ -1,13 +1,29 @@
 // NPM IMPORTS
-import T from 'typr'
 import assert from 'assert'
 
-// SERVER IMPORTS
-import SocketIOServiceProvider from '../base/socketio_service_provider'
-import runtime from '../../base/runtime'
+// COMMON IMPORTS
+import T               from 'devapt-core-common/dist/js/utils/types'
+import ServiceProvider from 'devapt-core-common/dist/js/services/service_provider'
+import ServiceResponse from 'devapt-core-common/dist/js/services/service_response'
+
+// SERVICES IMPORTS
 
 
-let context = 'server/services/topology/topology_svc_provider'
+const context = 'services/topology/topology_svc_provider'
+
+const GET_TENANTS_NAMES ='devapt-deployed-tenants-names'
+const GET_TENANTS_INFOS ='devapt-deployed-tenants-infos'
+const GET_TENANT_INFOS = 'devapt-deployed-tenant-infos'
+
+const GET_TENANT_APPLICATIONS_NAMES = 'devapt-deployed-applications-names'
+const GET_TENANT_APPLICATIONS_INFOS = 'devapt-deployed-applications-infos'
+const GET_TENANT_APPLICATION_INFOS = 'devapt-deployed-application-infos'
+
+const GET_TENANT_SERVICES_NAMES = 'devapt-deployed-services-names'
+const GET_TENANT_SERVICES_INFOS = 'devapt-deployed-services-infos'
+const GET_TENANT_SERVICE_INFOS = 'devapt-deployed-service-infos'
+
+const GET_NODES_NAMES = 'devapt-deployed-nodes'
 
 
 
@@ -16,158 +32,243 @@ let context = 'server/services/topology/topology_svc_provider'
  * @author Luc BORIES
  * @license Apache-2.0
  */
-export default class TopologySvcProvider extends SocketIOServiceProvider
+export default class TopologySvcProvider extends ServiceProvider
 {
 	/**
-	 * Create a Topology service provider.
-	 * @param {string} arg_provider_name - consumer name
-	 * @param {Service} arg_service_instance - service instance
-	 * @param {string} arg_context - logging context label
+	 * Create a topology service provider.
+	 * 
+	 * @param {string} arg_provider_name - consumer name.
+	 * @param {Service} arg_service_instance - service instance.
+	 * @param {string} arg_context - logging context label.
+	 * 
 	 * @returns {nothing}
 	 */
-	constructor(arg_provider_name, arg_service_instance, arg_context)
+	constructor(arg_provider_name, arg_service_instance, arg_context=context)
 	{
-		super(arg_provider_name, arg_service_instance, arg_context ? arg_context : context)
-		
-		assert(this.service.is_topology_service, context + ':bad topology service')
+		super(arg_provider_name, arg_service_instance, arg_context)
+
+		this.is_topology_svc_provider = true
 	}
-	
-	
+
+
+
+	/**
+	 * Get provider operations names.
+	 * 
+	 * @returns {array} - operations names.
+	 */
+	get_operations_names()
+	{
+		return [
+			GET_TENANTS_NAMES, GET_TENANTS_INFOS, GET_TENANT_INFOS,
+			GET_TENANT_APPLICATIONS_NAMES, GET_TENANT_APPLICATIONS_INFOS, GET_TENANT_APPLICATION_INFOS,
+			GET_TENANT_SERVICES_NAMES, GET_TENANT_SERVICES_INFOS, GET_TENANT_SERVICE_INFOS,
+			GET_NODES_NAMES
+		]
+	}
+
+
 	
 	/**
-	 * Process request and returns datas.
-	 * Query filter: {
-	 * 	 mode:'logical' or 'physical'
-	 *   root_type:'*' or 'node' or 'server' or 'application'
-	 *   root_name:node/server/application name
-	 * }
+	 * Produce service datas on request.
 	 * 
-	 * @param {string} arg_method - method name
-	 * @param {array} arg_operands - request operands
-	 * @param {Credentials} arg_credentials - request credentials
+	 * @param {ServiceRequest} arg_request - service request instance.
 	 * 
-	 * @returns {Promise}
+	 * @returns {Promise} - promise of ServiceResponse instance.
 	 */
-	process(arg_method, arg_operands, arg_credentials)
+	produce(arg_request)
 	{
-		assert( T.isString(arg_method), context + ':process:bad method string')
-		assert( T.isArray(arg_operands), context + ':process:bad operands array')
-		assert( T.isObject(arg_credentials) && arg_credentials.is_credentials, context + ':process:bad credentials object')
-		
-		// const metrics_server = runtime.node.metrics_server
-		
-		switch(arg_method)
+		this.enter_group('produce')
+
+		if ( ! T.isObject(arg_request) || ! arg_request.is_service_request)
 		{
-			case 'get': {
-				// GET WITHOUT OPERANDS
-				if ( arg_operands.length == 0)
-				{
-					// const nodejs_state_values = metrics_server.get_nodejs_metrics_state_values()
-					// console.log(nodejs_state_values, context + ':produce:get:no opds:nodejs_state_values')
-					
-					return Promise.reject('bad query mode')
-				}
-				
-				// GET WITH OPERANDS
-				const query = arg_operands[0]
-				if ( ! T.isObject(query) || ! T.isString(query.mode) )
-				{
-					console.log(query, context + ':produce:query')
-					return Promise.reject(context + ':produce:bad query object')
-				}
-				
-				// PHYSICAL TOPOLOGY
-				if (query.mode == 'physical')
-				{
-					let topology = { nodes:{} }
+			this.leave_group('produce:error:bad request object')
+			return Promise.resolve({error:'bad request object'})
+		}
 
-					// LOOP ON DEFINED NODES
-					const nodes = runtime.get_defined_topology().nodes().get_latest_items()
-					assert( T.isArray(nodes), context + ':process:bad runtime.nodes array')
-					nodes.forEach(
-						(node) => {
-							let node_topology = { servers:{} }
+		const operation = arg_request.get_operation()
+		console.log(context + ':produce:request for service=' + this.service.get_name() + ':operation=' + operation, 'operands=', arg_request.get_operands())
 
-							// LOOP ON NODE servers
-							const node_servers = node.servers().get_latest_items()
-							assert( T.isArray(node_servers), context + ':process:bad node.servers array')
-							node_servers.forEach(
-								(server) => {
-									node_topology.servers[server.get_name()] = {
-										host:server.server_host,
-										port:server.server_port,
-										protocole:server.server_protocole,
-										type:server.server_type,
-										middlewares:server.server_middlewares,
-										use_socketio:server.server_use_socketio
-									}
-								}
-							)
-							topology.nodes[node.get_name()] = node_topology
-						}
-					)
-					
-					return Promise.resolve(topology)
-				}
-				
-				// LOGICAL TOPOLOGY
-				if (query.mode == 'logical')
-				{
-					let topology = { applications:{} }
-					
-					// LOOP ON TENANTS
-					const defined_tenants = runtime.get_defined_topology().tenants().get_latest_items().get_latest_items()
-					defined_tenants.forEach(
-						(defined_tenant)=>{
-							
-							// LOOP ON TENANT APPLICATIONS
-							const applications = defined_tenant.applications().get_latest_items()
-							applications.forEach(
-								(defined_app) => {
+		const deployed_topology = this.get_runtime().get_deployed_topology()
+		const operand_0 = arg_request.get_operand(0)
+		const operand_1 = arg_request.get_operand(1)
+		const tenant_name = T.isNotEmptyString(operand_0) ? operand_0 : undefined
+		const item_name = T.isNotEmptyString(operand_1) ? operand_1 : undefined
 
-									let app_topology = { provided_services:{}, consumed_services:{} }
-									
-									// LOOP ON APPLICATION PROVIDED SERVICES
-									const app_provided_services = defined_app.provided_services().get_latest_items()
-									app_provided_services.forEach(
-										(svc) => {
-											app_topology.provided_services[svc.get_name()] = {}
-										}
-									)
-									
-									app.consumed_services.forEach(
-										(svc) => {
-											app_topology.consumed_services[svc.get_name()] = {}
-										}
-									)
-									
-									topology.applications[app.get_name()] = app_topology
-								}
-							)
-						}
-					)
-					
-					return Promise.resolve(topology)
-				}
+		console.log(context + ':produce:request for service=[%s] operation=[%s] tenant=[%s] item=[%s]', this.service.get_name(), operation, tenant_name, item_name)
+		const response = new ServiceResponse(arg_request)
+		let results = []
+		switch(operation){
+			case GET_TENANTS_NAMES:
+				results = deployed_topology.get_deployed_tenants_names()
+				break
+			case GET_TENANTS_INFOS:
+				results = deployed_topology.get_deployed_tenants_infos(true)
+				break
+			case GET_TENANT_INFOS:
+				results = tenant_name ? deployed_topology.get_deployed_tenant_infos(tenant_name, true) : []
+				break
+			
+			case GET_TENANT_APPLICATIONS_NAMES:
+				results = tenant_name ? deployed_topology.get_deployed_tenant_applications_names(tenant_name) : []
+				break
+			case GET_TENANT_APPLICATIONS_INFOS:
+				results = tenant_name ? deployed_topology.get_deployed_tenant_applications_infos(tenant_name, true) : []
+				break
+			case GET_TENANT_APPLICATION_INFOS:
+				results = tenant_name && item_name ? deployed_topology.get_deployed_tenant_application_infos(tenant_name, item_name, true) : []
+				break
+			
+			case GET_TENANT_SERVICES_NAMES:
+				results = tenant_name ? deployed_topology.get_deployed_tenant_services_names(tenant_name) : []
+				break
+			case GET_TENANT_SERVICES_INFOS:
+				results = tenant_name ? deployed_topology.get_deployed_tenant_services_infos(tenant_name, true) : []
+				break
+			case GET_TENANT_SERVICE_INFOS:
+				results = tenant_name && item_name ? deployed_topology.get_deployed_tenant_service_infos(tenant_name, item_name, true) : []
+				break
+
+			case GET_NODES_NAMES:
+				results = deployed_topology.get_deployed_nodes_names()
+				break
+
+			default:
+				response.set_has_error(true)
+				response.set_error('produce:error:bad operation [' + operation + ']')
 				
-				// LOGICAL TOPOLOGY
-				if (query.mode == 'registry')
-				{
-					const json = runtime.get_registry().get_state()
-					delete json.security
-					return Promise.resolve(json)
-				}
-				
-				// LOGICAL TOPOLOGY
-				if (query.mode == 'runtime')
-				{
-					const json = runtime.get_defined_topology().get_topology_info(true)
-					// console.log(context + ':produce:get:runtime:json=', json)
-					return Promise.resolve(json)
-				}
+				this.leave_group('produce:error:bad operation [' + operation + ']')
+				return Promise.resolve(response)
+		}
+		if (! results)
+		{
+			response.set_has_error(true)
+			response.set_error('produce:error:operation failure [' + operation + '], check tenant_name=' + tenant_name + ' or item name=' + item_name)
+
+			this.leave_group('produce:error:operation failure [' + operation + '], check tenant_name=' + tenant_name + ' or item name=' + item_name)
+			return Promise.resolve(response)
+		}
+		response.set_results(results)
+
+		// console.log(context + ':produce:reply for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
+		
+		this.leave_group('produce')
+		return Promise.resolve(response)
+	}
+
+
+	/**
+	 * Get deployed nodes.
+	 */
+	get_deployed_nodes_topology()
+	{
+		let topology = { nodes:{} }
+
+		// LOOP ON DEFINED NODES
+		const nodes = this.get_runtime().get_defined_topology().nodes().get_latest_items()
+		assert( T.isArray(nodes), context + ':get_deployed_nodes_topology:bad runtime.nodes array')
+		nodes.forEach(
+			(node) => {
+				topology.nodes[node.get_name()] = this.get_deployed_node_topology(node)
 			}
+		)
+
+		return topology.nodes
+	}
+
+
+
+	/**
+	 * Get deployed topology for a node.
+	 * 
+	 * @param {TopologyDeployedNode} arg_deployed_node - deployed node.
+	 * 
+	 * @returns {object} - deployed node topology plain object.
+	 */
+	get_deployed_node_topology(arg_deployed_node)
+	{
+		const node_topology = {
+			name:arg_deployed_node.get_name(),
+			servers:{}
+		}
+
+		// LOOP ON NODE SERVERS
+		const node_servers = arg_deployed_node.servers().get_latest_items()
+		assert( T.isArray(node_servers), context + ':get_deployed_node_topology:bad node.servers array')
+		node_servers.forEach(
+			(server) => {
+				node_topology.servers[server.get_name()] = this.get_deployed_server(server)
+			}
+		)
+		
+		return node_topology
+	}
+
+
+
+	/**
+	 * Get deployed topology for a server.
+	 * 
+	 * @param {TopologyDeployedServer} arg_deployed_server - deployed server.
+	 * 
+	 * @returns {object} - deployed server topology plain object.
+	 */
+	get_deployed_server_topology(arg_deployed_server)
+	{
+		const server_topology = {
+			host:arg_deployed_server.server_host,
+			port:arg_deployed_server.server_port,
+			protocole:arg_deployed_server.server_protocole,
+			type:arg_deployed_server.server_type,
+			middlewares:arg_deployed_server.server_middlewares,
+			use_socketio:arg_deployed_server.server_use_socketio
 		}
 		
-		return Promise.reject(context + ':produce:bad query mode')
+		return server_topology
+	}
+
+
+
+	/**
+	 * Get deployed tenants topology.
+	 * 
+	 * @returns {object} - deployed tenants topology plain object.
+	 */
+	get_deployed_tenants_topology()
+	{
+		const tenants_topology = {
+		}
+		
+		return tenants_topology
+	}
+
+
+
+	/**
+	 * Get deployed tenants topology.
+	 * 
+	 * @returns {object} - deployed tenant topology plain object.
+	 */
+	get_deployed_tenant_topology(arg_tenant_name)
+	{
+		const tenant_topology = {
+		}
+		
+		return tenant_topology
+	}
+
+
+
+	/**
+	 * Get deployed tenants topology.
+	 * 
+	 * @returns {object} - deployed tenant topology plain object.
+	 */
+	get_deployed_application_topology(arg_tenant_name)
+	{
+		const tenant_topology = {
+		}
+		
+		return tenant_topology
 	}
 }

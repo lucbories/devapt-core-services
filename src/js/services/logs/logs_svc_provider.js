@@ -1,13 +1,15 @@
 // NPM IMPORTS
-import T from 'typr'
-import assert from 'assert'
+// import assert from 'assert'
 
-// SERVER IMPORTS
-import SocketIOServiceProvider from '../base/socketio_service_provider'
-import runtime from '../../base/runtime'
+// COMMON IMPORTS
+import T               from 'devapt-core-common/dist/js/utils/types'
+import ServiceProvider from 'devapt-core-common/dist/js/services/service_provider'
+import ServiceResponse from 'devapt-core-common/dist/js/services/service_response'
+
+// SERVICES IMPORTS
 
 
-let context = 'server/services/logs/logs_svc_provider'
+let context = 'services/logs/logs_svc_provider'
 
 
 
@@ -16,31 +18,80 @@ let context = 'server/services/logs/logs_svc_provider'
  * @author Luc BORIES
  * @license Apache-2.0
  */
-export default class LogsSvcProvider extends SocketIOServiceProvider
+export default class LogsSvcProvider extends ServiceProvider
 {
 	/**
-	 * Create a Logs service provider.
-	 * @param {string} arg_provider_name - consumer name
-	 * @param {Service} arg_service_instance - service instance
-	 * @param {string} arg_context - logging context label
+	 * Create a assets service provider.
+	 * 
+	 * @param {string} arg_provider_name - consumer name.
+	 * @param {Service} arg_service_instance - service instance.
+	 * @param {string} arg_context - logging context label.
+	 * 
 	 * @returns {nothing}
 	 */
-	constructor(arg_provider_name, arg_service_instance, arg_context)
+	constructor(arg_provider_name, arg_service_instance, arg_context=context)
 	{
-		super(arg_provider_name, arg_service_instance, arg_context ? arg_context : context)
-		
-		assert(this.service.is_logs_service, context + ':bad Logs service')
-		
-		this.is_logs_service_provider = true
+		super(arg_provider_name, arg_service_instance, arg_context)
+
+		this.is_logs_svc_provider = true
 		
 		// CREATE A BUS CLIENT
-		this.logs_bus_stream = runtime.node.get_logs_bus().get_output_stream()
+		this.logs_bus_stream = this.get_runtime().node.get_logs_bus().get_input_stream()
 		this.init_logs_bus_stream()
+
+		// DEBUG
 		// this.logs_bus_stream.subscribe(
 		// 	(logs_record) => {
 		// 		console.log('LogsSvcProvider: new logs record on the bus', logs_record)
+		// 		this.provided_values_stream.push(logs_record)
 		// 	}
 		// )
+	}
+
+
+
+	/**
+	 * Get provider operations names.
+	 * @abstract
+	 * 
+	 * @returns {array}
+	 */
+	get_operations_names()
+	{
+		return ['devapt-log'].concat(super.get_operations_names())
+	}
+
+
+	
+	/**
+	 * Produce service datas on request.
+	 * 
+	 * @param {ServiceRequest} arg_request - service request instance.
+	 * 
+	 * @returns {Promise} - promise of ServiceResponse instance.
+	 */
+	produce(arg_request)
+	{
+		const operation = arg_request.get_operation()
+		// const operands = arg_request.get_operands()
+
+		// // CHECK OPERANDS
+		// if ( ! T.isNotEmptyArray(operands) )
+		// {
+		// 	return Promise.resolve(undefined)
+		// }
+
+		const response = new ServiceResponse(arg_request)
+
+		// SUBSCRIBE TO PROVIDER STREAM DATAS
+		if (operation == 'devapt-log')
+		{
+			// TODO
+			response.set_results([ { error:'...' } ])
+			return Promise.resolve(response)
+		}
+
+		return super.produce(arg_request)
 	}
 	
 	
@@ -94,14 +145,17 @@ export default class LogsSvcProvider extends SocketIOServiceProvider
 			let logs_source = undefined
 			let logs_array = undefined
 			
-			if ( T.isObject(arg_msg) && T.isString(arg_msg.target) && T.isObject(arg_msg.payload) )
+			// DEBUG
+			// debugger
+
+			if ( T.isObject(arg_msg) && arg_msg.is_distributed_logs )
 			{
-				logs_ts = arg_msg.payload.ts
-				logs_level = arg_msg.payload.level
-				logs_source = arg_msg.payload.source
-				logs_array = arg_msg.payload.logs
+				logs_ts = arg_msg.get_logs_ts()
+				logs_level = arg_msg.get_logs_level()
+				logs_source = arg_msg.get_logs_source()
+				logs_array = arg_msg.get_logs_values()
 			}
-			else if ( T.isString(arg_msg.level) && T.isArray(arg_msg.logs) )
+			else if ( T.isObject(arg_msg) && T.isString(arg_msg.level) && T.isArray(arg_msg.logs) )
 			{
 				logs_ts = arg_msg.ts
 				logs_level = arg_msg.level
@@ -126,21 +180,5 @@ export default class LogsSvcProvider extends SocketIOServiceProvider
 				this.provided_values_stream.push(logs_record)
 			}
 		)
-	}
-	
-	
-	
-	/**
-	 * Process request and returns datas.
-	 * 
-	 * @param {string} arg_method - method name
-	 * @param {array} arg_operands - request operands
-	 * @param {Credentials} arg_credentials - request credentials
-	 * 
-	 * @returns {Promise}
-	 */
-	process(/*arg_method, arg_operands, arg_credentials*/)
-	{
-		return Promise.reject('nothing to do')
 	}
 }
