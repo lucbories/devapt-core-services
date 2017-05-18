@@ -3,10 +3,11 @@ import assert from 'assert'
 import fs from 'fs'
 
 // COMMON IMPORTS
-import T from 'devapt-core-common/dist/js/utils/types'
+import T             from 'devapt-core-common/dist/js/utils/types'
+import {get_runtime} from 'devapt-core-common/dist/js/base/runtime'
+const runtime = get_runtime()
 
-// SERVER IMPORTS
-import runtime         from '../../base/runtime'
+// SERVICES IMPORTS
 import ExecutableRoute from '../../executables/executable_route'
 
 

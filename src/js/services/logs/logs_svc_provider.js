@@ -9,7 +9,7 @@ import ServiceResponse from 'devapt-core-common/dist/js/services/service_respons
 // SERVICES IMPORTS
 
 
-let context = 'services/logs/logs_svc_provider'
+const context = 'services/logs/logs_svc_provider'
 
 
 
@@ -35,7 +35,7 @@ export default class LogsSvcProvider extends ServiceProvider
 
 		this.is_logs_svc_provider = true
 		
-		// CREATE A BUS CLIENT
+		// GET INPUT STREAM TO FORWARD TO SUBSCRIBERS
 		this.logs_bus_stream = this.get_runtime().node.get_logs_bus().get_input_stream()
 		this.init_logs_bus_stream()
 

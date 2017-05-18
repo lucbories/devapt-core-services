@@ -1,28 +1,45 @@
 // NPM IMPORTS
-import T from 'typr'
-import assert from 'assert'
+// import assert from 'assert'
 
 // COMMON IMPORTS
-import Stream from '../../../common/messaging/stream'
+import T                  from 'devapt-core-common/dist/js/utils/types'
+import ServiceProvider    from 'devapt-core-common/dist/js/services/service_provider'
+import ServiceResponse    from 'devapt-core-common/dist/js/services/service_response'
+import DistributedMessage from 'devapt-core-common/dist/js/base/distributed_message'
+import DistributedLogs    from 'devapt-core-common/dist/js/base/distributed_logs'
+import DistributedMetrics from 'devapt-core-common/dist/js/base/distributed_metrics'
+// import Stream             from 'devapt-core-common/dist/js/messaging/stream'
 
-import runtime from '../../base/runtime'
-// SERVER IMPORTS
-import SocketIOServiceProvider from '../base/socketio_service_provider'
+// SERVICES IMPORTS
 
 
-let context = 'server/services/messages/messages_svc_provider'
+const context = 'services/messages/messages_svc_provider'
 
 
 
 /**
  * Messages service provider class.
+ * 
  * @author Luc BORIES
  * @license Apache-2.0
+ * 
+ * @example
+* 	API:
+* 		this._msg_subscriptions = {
+* 			sender name:{
+* 				bus name:{
+* 					channel name:{
+* 						socket: server/browser socket,
+* 						unsubscribe: function
+* 					}
+* 				}
+* 			}
+* 		}
  */
-export default class MessagesSvcProvider extends SocketIOServiceProvider
+export default class MessagesSvcProvider extends ServiceProvider
 {
 	/**
-	 * Create a Messages service provider.
+	 * Create a messages gateway service provider.
 	 * 
 	 * @param {string} arg_provider_name - consumer name.
 	 * @param {Service} arg_service_instance - service instance.
@@ -30,194 +47,470 @@ export default class MessagesSvcProvider extends SocketIOServiceProvider
 	 * 
 	 * @returns {nothing}
 	 */
-	constructor(arg_provider_name, arg_service_instance, arg_context)
+	constructor(arg_provider_name, arg_service_instance, arg_context=context)
 	{
-		super(arg_provider_name, arg_service_instance, arg_context ? arg_context : context)
-		
-		assert(this.service.is_messages_service, context + ':constructor:bad Messages service')
-		
-		this.is_messages_service_provider = true
-		
+		super(arg_provider_name, arg_service_instance, arg_context)
 
-		// INIT STREAM TRANSFORMATION WHEN BUS IS READY
-		this.is_ready = false
-		const self = this
-		runtime.node.msg_bus_feature.started_promise.then(
-			() => {
-				// console.log(context + ':init:msg feature is ready')
+		this.is_messages_svc_provider = true
 
-				const bus = runtime.node.get_msg_bus()
-				const gws = bus.get_gateways()
-				if ( gws.length > 0)
-				{
-					// LOOP ON BUS GATEWAYS
-					let gws_promises = []
-					gws.forEach(
-						(gw) => {
-							// console.log(context + ':init:msg feature gw=%s', gw.get_name())
-							gws_promises.push(gw.started_promise)
-						}
-					)
-					Promise.all(gws_promises).then( self.init_messages_bus_stream.bind(self) )
-				}
-				else
-				{
-					self.init_messages_bus_stream()
-				}
-			}
-		)
-
-
-		// DEBUG
-		// this.messages_bus_stream.subscribe(
-		// 	(messages_record) => {
-		// 		console.log(context + ':messages_bus_stream.subscribe:', messages_record)
-		// 	}
-		// )
+		this._msg_subscriptions = {}
 	}
 
 
-	
-	
-	init_messages_bus_stream()
+
+	/**
+	 * Get provider operations names.
+	 * @abstract
+	 * 
+	 * @returns {array}
+	 */
+	get_operations_names()
 	{
-		const self = this
-		// console.log(context + ':init_messages_bus_stream')
-
-		// CREATE NEW STREAM OF MESSAGES WITH TRANSPORTER ATTRIBUTE
-		const bus = runtime.node.get_msg_bus()
-		this.messages_bus_stream = new Stream()
-		const bus_stream_with_transporter = bus.get_output_stream().get_transformed_stream().map(
-			(msg) => {
-				msg.transporter = bus.get_name()
-				return msg
-			}
-		)
-		this.messages_bus_stream.set_transformed_stream(bus_stream_with_transporter)
-
-		// LOOP ON BUS GATEWAYS
-		const gws = bus.get_gateways()
-		if ( gws.length > 0)
-		{
-			let merged_stream = bus_stream_with_transporter
-			gws.forEach(
-				(gw) => {
-					// console.log(context + ':init:merge gw stream=%s', gw.get_name())
-					const stream = gw.get_output_stream()
-					if (stream)
-					{
-						const gw_stream_with_transporter = stream.get_transformed_stream().map(
-							(msg) => {
-								msg.transporter = gw.get_name()
-								// console.log(context + ':gw bus msg:transporter=%s sender=%s target=%s', msg.transporter, msg.sender, msg.target)
-								return msg
-							}
-						)
-						merged_stream = merged_stream.merge(gw_stream_with_transporter)
-					}
-				}
-			)
-			this.messages_bus_stream.set_transformed_stream(merged_stream)
-		}
-
-		const msg_cb = (arg_msg) => {
-			const message_ts = new Date()
-			const message_transporter = arg_msg && arg_msg.transporter ? arg_msg.transporter : 'unknow'
-			const message_sender = arg_msg && arg_msg.sender ? arg_msg.sender : 'unknow'
-			const message_target = arg_msg && arg_msg.target ? arg_msg.target : 'unknow'
-			const message_payload = arg_msg && arg_msg.payload ? arg_msg.payload : { error:'unknow message payload' }
-			
-			const max_payload_chars = 100
-			let payload_str = JSON.stringify( message_payload )
-			payload_str = payload_str.substr(0, max_payload_chars)
-			// payload_str = escape(payload_str) // TODO SANITIZE
-
-			const message_record = {
-				ts:message_ts,
-				transporter:message_transporter,
-				sender:message_sender,
-				target:message_target,
-				payload:payload_str
-			}
-			
-			// console.log(context + ':init_messages_bus_stream::msg_cb:message_record', message_record)
-
-			return [message_record]
-		}
-		
-		self.messages_bus_stream_transfomed = self.messages_bus_stream.get_transformed_stream().map(msg_cb)
-		
-		self.messages_bus_stream_transfomed.onValue(
-			(values) => {
-				const msg = values[0]
-				// console.log(context + ':provided_values_stream.push:transporter=%s sender=%s target=%s', msg.transporter, msg.sender, msg.target)
-
-				this.provided_values_stream.push(values)
-			}
-		)
-
-		this.is_ready = true
+		return [
+			'devapt-msg-describe', 'devapt-msg-recipients',
+			'devapt-msg-send',
+			'devapt-msg-subscribe', 'devapt-msg-unsubscribe', 'devapt-msg-subscription'
+		].concat( super.get_operations_names() )
 	}
-	
-	
+
+
 	
 	/**
-	 * Process request and returns datas.
+	 * Produce service datas on request.
 	 * 
-	 * @param {string} arg_method - method name.
-	 * @param {array} arg_operands - request operands.
-	 * @param {Credentials} arg_credentials - request credentials.
+	 * @param {ServiceRequest} arg_request - service request instance.
 	 * 
-	 * @returns {Promise}
+	 * @returns {Promise} - promise of ServiceResponse instance.
 	 */
-	process(arg_method, arg_operands, arg_credentials)
+	produce(arg_request)
 	{
-		// console.log(context + ':process')
-		assert(this.is_ready, context + ':process:not ready yet')
-		assert( T.isString(arg_method), context + ':process:bad method string')
-		assert( T.isArray(arg_operands), context + ':process:bad operands array')
-		assert( T.isObject(arg_credentials) && arg_credentials.is_credentials, context + ':process:bad credentials object')
-		
-		switch(arg_method)
+		this.enter_group('produce')
+
+		if ( ! T.isObject(arg_request) || ! arg_request.is_service_request)
 		{
-			case 'get': {
-				// GET WITHOUT OPERANDS
-				if ( arg_operands.length == 0)
-				{
-					const bus_state_values = {}
-					// console.log(bus_state_values, context + ':produce:get:no opds:bus_state_values')
-					
-					return Promise.resolve(bus_state_values)
-				}
-				
-				// GET WITH OPERANDS
-				const first_operand = arg_operands[0]
-				
-				if ( T.isObject(first_operand) && T.isObject(first_operand.args) )
-				{
-					if ( T.isString(first_operand.args.bus_name) )
-					{
-						const bus_state_values = {}
-						// console.log(bus_state_values, context + ':produce:get:bus_name=' + first_operand.args.bus_name + ':bus_state_values')
-						
-						return Promise.resolve(bus_state_values)
-					}
-				}
-				
-				const bus_state_values = {}
-				// console.log(bus_state_values, context + ':produce:get:bad opds:bus_state_values')
-				return Promise.resolve(bus_state_values)
+			this.leave_group('produce:error:bad request object.')
+			return Promise.resolve({error:'bad request object'})
+		}
+
+		const response = new ServiceResponse(arg_request)
+		const operation = arg_request.get_operation()
+		const operands = arg_request.get_operands()
+
+		// console.log(context + ':produce:request for service=' + this.service.get_name() + ':operation=' + operation)
+
+		// GET BUSES
+		const node = this.get_runtime().get_node()
+		const msg_bus = node.get_msg_bus()
+		const logs_bus = node.get_logs_bus()
+		const metrics_bus = node.get_metrics_bus()
+		const msg_engine = msg_bus.get_bus_engine()
+		const logs_engine = logs_bus.get_bus_engine()
+		const metrics_engine = metrics_bus.get_bus_engine()
+
+
+		if (operation == 'devapt-msg-recipients')
+		{
+			const bus        = operands.length > 0 ? operands[0] : undefined
+			const page_size  = operands.length > 1 ? operands[1] : 99
+			const page_index = operands.length > 2 ? operands[2] : 0
+
+			if (bus == 'messages')
+			{
+				const paged_result = msg_bus.msg_recipients(page_size, page_index)
+				response.set_results(paged_result)
+				this.leave_group('produce:operation[' + operation + '] for bus [' + bus + ']')
+				return Promise.resolve(response)
+			}
+
+			if (bus == 'logs')
+			{
+				const paged_result = logs_bus.msg_recipients(page_size, page_index)
+				response.set_results(paged_result)
+				this.leave_group('produce:operation[' + operation + '] for bus [' + bus + ']')
+				return Promise.resolve(response)
+			}
+
+			if (bus == 'metrics')
+			{
+				const paged_result = metrics_bus.msg_recipients(page_size, page_index)
+				response.set_results(paged_result)
+				this.leave_group('produce:operation[' + operation + '] for bus [' + bus + ']')
+				return Promise.resolve(response)
+			}
+
+			// ERROR: BAD BUS NAME
+			response.set_has_error(true)
+			response.set_error('bad operands bus [' + bus + '] for operation [' + operation + ']')
+			response.set_results(operands)
+
+			this.leave_group('produce:error:operation failure [' + operation + ']:bad operands bus [' + bus + '].')
+			return Promise.resolve(response)
+		}
+	
+		if (operation == 'devapt-msg-describe')
+		{
+			const buses = {}
+
+			buses['messages'] = {
+				name:msg_bus.get_name(),
+				type:'messages',
+				engine:msg_engine.get_name(),
+				channels:msg_engine.channel_list(),
+				recipients:node.get_msg_bus().msg_recipients(99, 0)
 			}
 			
-			case 'list': {
-				const bus_state_items = {}
-				// console.log(bus_state_items, context + ':produce:list:bus_state_items')
-				
-				return Promise.resolve(bus_state_items)
+			buses['logs'] = {
+				name:logs_bus.get_name(),
+				type:'logs',
+				engine:logs_engine.get_name(),
+				channels:logs_engine.channel_list(),
+				recipients:node.get_logs_bus().msg_recipients(99, 0)
+			}
+			
+			buses['metrics'] = {
+				name:metrics_bus.get_name(),
+				type:'metrics',
+				engine:metrics_engine.get_name(),
+				channels:metrics_engine.channel_list(),
+				recipients:node.get_metrics_bus().msg_recipients(99, 0)
+			}
+
+			response.set_results(buses)
+
+			// console.log(context + ':produce:reply for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
+
+			this.leave_group('produce:operation[' + operation + ']')
+			return Promise.resolve(response)
+		}
+
+
+		if (operation == 'devapt-msg-send')
+		{
+			const response_promise = this.produce_send(arg_request)
+			this.leave_group('produce:[' + operation + ']')
+			return response_promise
+		}
+
+
+		if (operation == 'devapt-msg-subscribe')
+		{
+			const response_promise = this.produce_subscribe(arg_request)
+			this.leave_group('produce:[' + operation + ']')
+			return response_promise
+		}
+
+
+		if (operation == 'devapt-msg-unsubscribe')
+		{
+			const response_promise = this.produce_unsubscribe(arg_request)
+			this.leave_group('produce:[' + operation + ']')
+			return response_promise
+		}
+
+
+		if (operation == 'devapt-msg-subscription')
+		{
+			this.leave_group('produce:[' + operation + ']')
+			return Promise.resolve(response)
+		}
+
+		this.leave_group('produce:super.')
+		return super.produce(arg_request)
+	}
+
+
+
+	produce_send(arg_request)
+	{
+		this.enter_group('produce_send')
+
+		const response = new ServiceResponse(arg_request)
+		const operation = arg_request.get_operation()
+		const operands = arg_request.get_operands()
+		const node = this.get_runtime().get_node()
+
+		// GET REQUEST OPERANDS
+		const sender  = arg_request.get_session_uid()
+		const bus     = operands.length > 0 ? operands[0] : undefined
+		const channel = operands.length > 1 ? operands[1] : 'default'
+		const target  = operands.length > 2 ? operands[2] : undefined
+		const payload = operands.length > 3 ? operands[3] : undefined
+
+		if (bus == 'messages')
+		{
+			// CHECK REQUEST OPERANDS
+			if ( ! T.isString(channel) || ! T.isString(target) || ! T.isObject(payload) )
+			{
+				response.set_has_error(true)
+				response.set_error('bad operands to send a message.')
+				response.set_results(operands)
+
+				this.leave_group('produce_send:error:operation failure [' + operation + ']:bad operands to send a message.')
+				return Promise.resolve(response)
+			}
+
+			const msg = new DistributedMessage(sender, target, payload, channel)
+			node.get_msg_bus().msg_post(msg)
+
+			this.leave_group('produce_send:operation[' + operation + '] for bus=[' + bus + '], channel=[' + channel + '], target=[' + target + ']')
+			return Promise.resolve(response)
+		}
+
+		if (bus == 'logs')
+		{
+			// CHECK REQUEST OPERANDS
+			if ( ! T.isString(channel) || ! T.isString(target) || ! T.isObject(payload) )
+			{
+				response.set_has_error(true)
+				response.set_error('bad operands to send logs.')
+				response.set_results(operands)
+
+				this.leave_group('produce_send:error:operation failure [' + operation + ']:bad operands to send logs.')
+				return Promise.resolve(response)
+			}
+
+			// CHECK LOGS CONTENT
+			if ( ! T.isString(payload.timestamp) || ! T.isString(payload.level) || ! T.isArray(payload.values) )
+			{
+				response.set_has_error(true)
+				response.set_error('bad operands payload to send logs: {timestamp:"", level:"", values:[]}.')
+				response.set_results(operands)
+
+				this.leave_group('produce_send:error:operation failure [' + operation + ']:bad operands payload to send logs: {timestamp:"", level:"", values:[]}.')
+				return Promise.resolve(response)
+			}
+
+			const msg = new DistributedLogs(sender, target, payload.timestamp, payload.level, payload.values)
+			node.get_logs_bus().msg_post(msg)
+			
+			this.leave_group('produce_send:operation[' + operation + '] for bus=[logs]')
+			return Promise.resolve(response)
+		}
+
+		if (bus == 'metrics')
+		{
+			// CHECK REQUEST OPERANDS
+			if ( ! T.isString(channel) || ! T.isString(target) || ! T.isObject(payload) )
+			{
+				response.set_has_error(true)
+				response.set_error('bad operands to send metrics.')
+				response.set_results(operands)
+
+				this.leave_group('produce_send:error:operation failure [' + operation + ']:bad operands to send metrics.')
+				return Promise.resolve(response)
+			}
+
+			// CHECK METRICS CONTENT
+			if ( ! T.isString(payload.type) || ! T.isArray(payload.values) )
+			{
+				response.set_has_error(true)
+				response.set_error('bad operands payload to send metrics: {type:"", values:[]}.')
+				response.set_results(operands)
+
+				this.leave_group('produce_send:error:operation failure [' + operation + ']:bad operands payload to send metrics: {type:"", values:[]}.')
+				return Promise.resolve(response)
+			}
+
+			const msg = new DistributedMetrics(sender, target, payload.type, payload.values)
+			node.get_metrics_bus().msg_post(msg)
+			
+			this.leave_group('produce_send:operation[' + operation + '] for bus=[metrics]')
+			return Promise.resolve(response)
+		}
+
+		// ERROR: BAD BUS NAME
+		response.set_has_error(true)
+		response.set_error('bad operands bus [' + bus + '] for operation [' + operation + ']')
+		response.set_results(operands)
+
+		this.leave_group('produce_send:error:operation failure [' + operation + ']:bad operands bus [' + bus + '].')
+		return Promise.resolve(response)
+	}
+
+
+
+	produce_subscribe(arg_request)
+	{
+		this.enter_group('produce_subscribe')
+
+		const response = new ServiceResponse(arg_request)
+		const operation = arg_request.get_operation()
+		const operands = arg_request.get_operands()
+		const node = this.get_runtime().get_node()
+
+		// // GET REQUEST OPERANDS
+		const sender  = arg_request.get_session_uid()
+		const bus     = operands.length > 0 ? operands[0] : undefined
+		const channel = operands.length > 1 ? operands[1] : 'default'
+		
+		if (bus == 'messages')
+		{
+			// CHECK REQUEST OPERANDS
+			if ( ! T.isString(channel) )
+			{
+				response.set_has_error(true)
+				response.set_error('bad operands channel to subscribe on messages.')
+				response.set_results(operands)
+
+				this.leave_group('produce_subscribe:error:operation failure [' + operation + ']:bad operands channel to subscribe on messages.')
+				return Promise.resolve(response)
+			}
+
+			// SUBSCRIPTION EXISTS
+			if ( this.has_subscription(sender, bus, channel) )
+			{
+				response.set_has_error(true)
+				response.set_error('messages subscription already exists for sender [' + sender + '].')
+				response.set_results(operands)
+
+				this.leave_group('produce_subscribe:error:operation failure [' + operation + ']:messages subscription already exists for sender [' + sender + '].')
+				return Promise.resolve(response)
+			}
+
+
+			// CREATE SESSION STREAM
+			const socket = arg_request.get_socket()
+			this._msg_subscriptions[sender] = this.init_subscription(sender, bus, channel, socket)
+
+			const handler = (arg_msg)=>{
+				if (arg_msg.get_target() == sender)
+				{
+					socket.emit('devapt-msg-subscription', { service:this.service.get_name(), operation:'devapt-msg-subscription', result:'done', datas:arg_msg })
+				}
+			}
+
+			this._msg_subscriptions[sender][bus][channel].unsubscribe = node.get_msg_bus().msg_subscribe(channel, handler, sender)
+			
+			// UNSUBSCRIBE ON SOCKET CLOSE
+			socket.on('disconnect', ()=>{
+				if ( this.has_subscription(sender, bus, channel) && this._msg_subscriptions[sender][bus][channel].unsubscribe )
+				{
+					this._msg_subscriptions[sender][bus][channel].unsubscribe()
+				}
+				node.get_msg_bus().msg_remove_recipient(sender)
+			})
+			socket.on('end', ()=>{
+				if ( this.has_subscription(sender, bus, channel) && this._msg_subscriptions[sender][bus][channel].unsubscribe )
+				{
+					this._msg_subscriptions[sender][bus][channel].unsubscribe()
+				}
+				node.get_msg_bus().msg_remove_recipient(sender)
+			})
+
+			this.leave_group('produce_subscribe:operation[' + operation + '] for bus=[messages] for sender [' + sender + ']')
+			return Promise.resolve(response)
+		}
+
+		// ERROR: BAD BUS NAME
+		response.set_has_error(true)
+		response.set_error('bad operands bus [' + bus + '] for operation [' + operation + ']')
+		response.set_results(operands)
+
+		this.leave_group('produce_subscribe:error:operation failure [' + operation + ']:bad operands bus [' + bus + '].')
+		return Promise.resolve(response)
+	}
+
+
+	has_subscription(arg_sender, arg_bus, arg_channel)
+	{
+		if (arg_sender in this._msg_subscriptions)
+		{
+			const subscription = this._msg_subscriptions[arg_sender]
+			if (arg_bus in subscription)
+			{
+				if (arg_channel in subscription[arg_bus])
+				{
+					return true
+				}
 			}
 		}
+
+		return false
+	}
+
+
+	init_subscription(arg_sender, arg_bus, arg_channel, arg_socket)
+	{
+		let subscription = this._msg_subscriptions[arg_sender]
+		if ( ! subscription)
+		{
+			subscription = {}
+		}
+
+		if ( !(arg_bus in subscription) )
+		{
+			subscription[arg_bus] = {}
+		}
+
+		if ( ! (arg_channel in subscription[arg_bus]) )
+		{
+			subscription[arg_bus][arg_channel] = {
+				socket:arg_socket,
+				unsubscribe: undefined
+			}
+		}
+
+		return subscription
+	}
+
+
+
+	produce_unsubscribe(arg_request)
+	{
+		this.enter_group('produce_unsubscribe')
+
+		const response = new ServiceResponse(arg_request)
+		const operation = arg_request.get_operation()
+		const operands = arg_request.get_operands()
+
+		// // GET REQUEST OPERANDS
+		const sender  = arg_request.get_session_uid()
+		const bus     = operands.length > 0 ? operands[0] : undefined
+		const channel = operands.length > 1 ? operands[1] : 'default'
 		
-		
-		return Promise.reject('bad data request operation [' + arg_method + ']')
+		if (bus == 'messages')
+		{
+			// CHECK REQUEST OPERANDS
+			if ( ! T.isString(channel) )
+			{
+				response.set_has_error(true)
+				response.set_error('bad operands channel to unsubscribe for messages.')
+				response.set_results(operands)
+
+				this.leave_group('produce_unsubscribe:error:operation failure [' + operation + ']:bad operands channel to unsubscribe for messages.')
+				return Promise.resolve(response)
+			}
+
+			// CHECK SUBSCRIPTION
+			if ( ! this.has_subscription(sender, bus, channel) )
+			{
+				response.set_has_error(true)
+				response.set_error('messages subscription doesn t exists for sender [' + sender + '].')
+				response.set_results(operands)
+
+				this.leave_group('produce_unsubscribe:error:operation failure [' + operation + ']:messages subscription doesn t exists for sender [' + sender + '].')
+				return Promise.resolve(response)
+			}
+			const subscription = this._msg_subscriptions[sender][bus][channel]
+
+			// REMOVE SESSION STREAM
+			const unsubscribe_fn = subscription.unsubscribe
+			if (unsubscribe_fn)
+			{
+				unsubscribe_fn()
+			}
+			delete this._msg_subscriptions[sender][bus][channel]
+
+			this.leave_group('produce_unsubscribe:operation[' + operation + '] for bus=[messages] for sender [' + sender + ']')
+			return Promise.resolve(response)
+		}
+
+		// ERROR: BAD BUS NAME
+		response.set_has_error(true)
+		response.set_error('bad operands bus [' + bus + '] for operation [' + operation + ']')
+		response.set_results(operands)
+
+		this.leave_group('produce_unsubscribe:error:operation failure [' + operation + ']:bad operands bus [' + bus + '].')
+		return Promise.resolve(response)
 	}
 }

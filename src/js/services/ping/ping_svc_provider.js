@@ -46,7 +46,7 @@ export default class PingSvcProvider extends ServiceProvider
 	 */
 	get_operations_names()
 	{
-		return ['devapt-ping']
+		return ['devapt-ping'].concat(super.get_operations_names())
 	}
 
 
@@ -79,6 +79,7 @@ export default class PingSvcProvider extends ServiceProvider
 			return Promise.resolve(response)
 		}
 
-		return Promise.resolve(undefined)
+		this.leave_group('produce:super.')
+		return super.produce(arg_request)
 	}
 }

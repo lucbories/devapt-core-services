@@ -65,6 +65,7 @@ export default class TopologySvcProvider extends ServiceProvider
 			GET_TENANT_SERVICES_NAMES, GET_TENANT_SERVICES_INFOS, GET_TENANT_SERVICE_INFOS,
 			GET_NODES_NAMES
 		]
+		//.concat(super.get_operations_names())
 	}
 
 
@@ -147,6 +148,9 @@ export default class TopologySvcProvider extends ServiceProvider
 
 			this.leave_group('produce:error:operation failure [' + operation + '], check tenant_name=' + tenant_name + ' or item name=' + item_name)
 			return Promise.resolve(response)
+
+			// this.leave_group('produce:super.')
+			// return super.produce(arg_request)
 		}
 		response.set_results(results)
 
