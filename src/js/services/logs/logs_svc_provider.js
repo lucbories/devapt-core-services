@@ -177,7 +177,7 @@ export default class LogsSvcProvider extends ServiceProvider
 		
 		self.logs_bus_stream_transfomed.onValue(
 			(logs_record) => {
-				this.provided_values_stream.push(logs_record)
+				this.get_stream('default').push(logs_record)
 			}
 		)
 	}

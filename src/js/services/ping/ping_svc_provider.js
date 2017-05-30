@@ -1,10 +1,12 @@
 // NPM IMPORTS
 // import assert from 'assert'
+import {format} from 'util'
 
 // COMMON IMPORTS
-import T               from 'devapt-core-common/dist/js/utils/types'
-import ServiceProvider from 'devapt-core-common/dist/js/services/service_provider'
-import ServiceResponse from 'devapt-core-common/dist/js/services/service_response'
+import T                  from 'devapt-core-common/dist/js/utils/types'
+import ServiceProvider    from 'devapt-core-common/dist/js/services/service_provider'
+import ServiceResponse    from 'devapt-core-common/dist/js/services/service_response'
+import DistributedMessage from 'devapt-core-common/dist/js/base/distributed_message'
 
 // SERVICES IMPORTS
 
@@ -66,20 +68,70 @@ export default class PingSvcProvider extends ServiceProvider
 		}
 
 		const operation = arg_request.get_operation()
+		const operands  = arg_request.get_operands()
+		const target    = operands.length > 0 && T.isNotEmptyString(operands[0]) ? operands[0] : undefined
 
 		// console.log(context + ':produce:request for service=' + this.service.get_name() + ':operation=' + operation)
 
 		if (operation == 'devapt-ping')
 		{
-			const response = new ServiceResponse(arg_request)
-			response.set_results(['devapt-pong'])
+			console.log(context + ':produce:process for service=' + this.service.get_name() + ':operation=' + operation)
 
-			// console.log(context + ':produce:reply for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
-
-			return Promise.resolve(response)
+			if (! target/* || target == this.get_runtime().node.get_name()*/)
+			{
+				console.log(context + ':produce:reply for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
+				
+				const response  = new ServiceResponse(arg_request)
+				response.set_results(['devapt-pong'])
+				return Promise.resolve(response)
+			}
+			
+			const work = (resolve/*, reject*/)=>{
+				const response  = new ServiceResponse(arg_request)
+				console.log(context + ':produce:forward request for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
+				
+				const plain_object_payload = arg_request.get_properties_values()
+				plain_object_payload.socket_id = arg_request.get_socket().id
+				
+				const msg = new DistributedMessage(arg_request.get_session_uid(), target, plain_object_payload)
+				const bool_result = this.get_runtime().node.get_msg_bus().msg_post(msg)
+				
+				if (! bool_result)
+				{
+					this.fill_error(response, operands, 'message forward failure', target)
+					resolve(response)
+				}
+			}
+			
+			return new Promise(work)
 		}
 
 		this.leave_group('produce:super.')
 		return super.produce(arg_request)
+	}
+
+
+
+	/**
+	 * Populate a response with error message.
+	 * 
+	 * @param {ServiceResponse} arg_response - response instance.
+	 * @param {array} arg_operands     - request operands.
+	 * @param {string} arg_error       - error text.
+	 * @param {string} arg_target      - target name.
+	 * 
+	 * @returns {nothing}
+	 */
+	fill_error(arg_response, arg_operands, arg_error, arg_target='N/A')
+	{
+		const op = arg_response.get_operation()
+		const svc = arg_response.get_service()
+		const error_msg = format('produce:error=[%s] with svc=[%s] operation=[%s] target=[%s].', arg_error, svc, op, arg_target)
+		
+		arg_response.set_has_error(true)
+		arg_response.set_error(error_msg)
+		arg_response.set_results(arg_operands)
+		
+		this.leave_group(error_msg)
 	}
 }

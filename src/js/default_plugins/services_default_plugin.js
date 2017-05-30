@@ -29,21 +29,17 @@ const default_plugins_map = {
 	'resources_svc':{
 		'provider':'devapt-core-services/dist/js/services/resources/resources_svc_provider'
 	},
-	'metrics_bus_svc':{
-		'provider':'devapt-core-services/dist/js/services/metrics_bus/metrics_bus_svc_provider'
+	'metrics_svc':{
+		'provider':'devapt-core-services/dist/js/services/metrics/metrics_svc_provider'
+	},
+	'middlewares_svc':{
+		'provider':'devapt-core-services/dist/js/services/middlewares/middlewares_svc_provider'
 	}
-	
-	// 'middleware':               'devapt-core-services/dist/js/services/middleware/mw_service',
-	// 'metrics_http':             'devapt-core-services/dist/js/services/metrics_http/metrics_service',
-	// 'metrics_host':             'devapt-core-services/dist/js/services/metrics_host/metrics_service',
-	// 'metrics_nodejs':           'devapt-core-services/dist/js/services/metrics_nodejs/metrics_service',
-	// 'metrics_bus':              'devapt-core-services/dist/js/services/metrics_bus/metrics_service',
-	// 'rest_api_models_query':    'devapt-core-services/dist/js/services/crud/crud_service',
-	// 'rest_api_models_modifier': 'devapt-core-services/dist/js/services/crud/crud_service',
-	// 'rest_api_resources_query': 'devapt-core-services/dist/js/services/resource/resources_service',
-	// 'security':                 'devapt-core-services/dist/js/services/security/security_service'
 }
-
+// 'rest_api_models_query':    'devapt-core-services/dist/js/services/crud/crud_service',
+// 'rest_api_models_modifier': 'devapt-core-services/dist/js/services/crud/crud_service',
+// 'rest_api_resources_query': 'devapt-core-services/dist/js/services/resource/resources_service',
+// 'security':                 'devapt-core-services/dist/js/services/security/security_service'
 
 const context = 'services/default_plugins/services_default_plugin'
 

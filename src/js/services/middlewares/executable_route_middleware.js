@@ -4,13 +4,14 @@ import assert from 'assert'
 // COMMON IMPORTS
 import T                from 'devapt-core-common/dist/js/utils/types'
 import RenderingBuilder from 'devapt-core-common/dist/js/rendering/rendering_builder'
+import {get_runtime} from 'devapt-core-common/dist/js/base/runtime'
+const runtime = get_runtime()
 
 // SERVER IMPORTS
-import runtime          from '../../base/runtime'
 import ExecutableRoute  from '../../executables/executable_route'
 
 
-let context = 'services/middleware/executable_route_middleware'
+const context = 'services/middlewares/executable_route_middleware'
 
 
 

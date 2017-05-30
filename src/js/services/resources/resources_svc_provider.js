@@ -86,7 +86,7 @@ export default class ResourcesSvcProvider extends ServiceProvider
 		const check_tenant_name = T.isNotEmptyString(tenant_name)
 		if (! check_tenant_name)
 		{
-			this.error(response, operands, 'bad credentials tenant name', tenant_name, application_name, undefined, undefined)
+			this.fill_error(response, operands, 'bad credentials tenant name', tenant_name, application_name, undefined, undefined)
 			return Promise.resolve(response)
 		}
 
@@ -97,7 +97,7 @@ export default class ResourcesSvcProvider extends ServiceProvider
 		const check_app_name = T.isNotEmptyString(application_name)
 		if (! check_app_name)
 		{
-			this.error(response, operands, 'bad credentials application name', tenant_name, application_name, undefined, undefined)
+			this.fill_error(response, operands, 'bad credentials application name', tenant_name, application_name, undefined, undefined)
 			return Promise.resolve(response)
 		}
 		
@@ -111,7 +111,7 @@ export default class ResourcesSvcProvider extends ServiceProvider
 		const check_tenant = T.isObject(defined_tenant) && defined_tenant.is_topology_define_tenant
 		if (! check_tenant)
 		{
-			this.error(response, operands, 'bad credentials tenant object', tenant_name, application_name, undefined, undefined)
+			this.fill_error(response, operands, 'bad credentials tenant object', tenant_name, application_name, undefined, undefined)
 			return Promise.resolve(response)
 		}
 
@@ -120,7 +120,7 @@ export default class ResourcesSvcProvider extends ServiceProvider
 		const check_app = T.isObject(application) && application.is_topology_define_application
 		if (! check_app)
 		{
-			this.error(response, operands, 'bad credentials application object', tenant_name, application_name, undefined, undefined)
+			this.fill_error(response, operands, 'bad credentials application object', tenant_name, application_name, undefined, undefined)
 			return Promise.resolve(response)
 		}
 
@@ -129,7 +129,7 @@ export default class ResourcesSvcProvider extends ServiceProvider
 		const collection = T.isNotEmptyString(opd_1) ? opd_1 : undefined
 		if (! collection)
 		{
-			this.error(response, operands, 'bad collection name', tenant_name, application_name, undefined, undefined)
+			this.fill_error(response, operands, 'bad collection name', tenant_name, application_name, undefined, undefined)
 			return Promise.resolve(response)
 		}
 
@@ -150,7 +150,7 @@ export default class ResourcesSvcProvider extends ServiceProvider
 		const res_name = T.isNotEmptyString(opd_2) ? opd_2 : undefined
 		if (! res_name)
 		{
-			this.error(response, operands, 'bad resource name', tenant_name, application_name, collection, undefined)
+			this.fill_error(response, operands, 'bad resource name', tenant_name, application_name, collection, undefined)
 			return Promise.resolve(response)
 		}
 		
@@ -162,13 +162,13 @@ export default class ResourcesSvcProvider extends ServiceProvider
 
 			if (! T.isObject(resource_instance) )
 			{
-				this.error(response, operands, 'resource not found', tenant_name, application_name, collection, res_name)
+				this.fill_error(response, operands, 'resource not found', tenant_name, application_name, collection, res_name)
 				return Promise.resolve(response)
 			}
 
 			if (collection !== '*' && (resource_instance.topology_type != collection) )
 			{
-				this.error(response, operands, 'resource found but bad collection', tenant_name, application_name, collection, res_name)
+				this.fill_error(response, operands, 'resource found but bad collection', tenant_name, application_name, collection, res_name)
 				return Promise.resolve(response)
 			}
 			
@@ -176,7 +176,7 @@ export default class ResourcesSvcProvider extends ServiceProvider
 			const results = [res_settings]
 			if (res_settings.error)
 			{
-				this.error(response, operands, res_settings.error, tenant_name, application_name, collection, res_name)
+				this.fill_error(response, operands, res_settings.error, tenant_name, application_name, collection, res_name)
 				return Promise.resolve(response)
 			}
 
@@ -185,7 +185,7 @@ export default class ResourcesSvcProvider extends ServiceProvider
 			return Promise.resolve(response)
 		}
 			
-		this.error(response, operands, 'bad operation', tenant_name, application_name, collection, res_name)
+		this.fill_error(response, operands, 'bad operation', tenant_name, application_name, collection, res_name)
 		return Promise.resolve(response)
 
 		// this.leave_group('produce:super.')
@@ -207,7 +207,7 @@ export default class ResourcesSvcProvider extends ServiceProvider
 	 * 
 	 * @returns {nothing}
 	 */
-	error(arg_response, arg_operands, arg_error, arg_tenant='N/A', arg_application='N/A', arg_collection='N/A', arg_resource='N/A')
+	fill_error(arg_response, arg_operands, arg_error, arg_tenant='N/A', arg_application='N/A', arg_collection='N/A', arg_resource='N/A')
 	{
 		const op = arg_response.get_operation()
 		const svc = arg_response.get_service()

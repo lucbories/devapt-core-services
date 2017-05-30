@@ -1,5 +1,6 @@
 // NPM IMPORTS
 // import assert from 'assert'
+import _ from 'lodash'
 
 // COMMON IMPORTS
 import T                  from 'devapt-core-common/dist/js/utils/types'
@@ -210,6 +211,8 @@ export default class MessagesSvcProvider extends ServiceProvider
 
 		if (operation == 'devapt-msg-subscription')
 		{
+			response.set_results([])
+
 			this.leave_group('produce:[' + operation + ']')
 			return Promise.resolve(response)
 		}
@@ -375,10 +378,51 @@ export default class MessagesSvcProvider extends ServiceProvider
 			const handler = (arg_msg)=>{
 				if (arg_msg.get_target() == sender)
 				{
-					socket.emit('devapt-msg-subscription', { service:this.service.get_name(), operation:'devapt-msg-subscription', result:'done', datas:arg_msg })
+					const msg_payload = arg_msg.get_payload()
+					const socket_id = msg_payload.socket_id//.split('#')[1]
+					
+					// SERVICE RESPONSE TRANSPORT
+					if ( T.isNotEmptyString(msg_payload.service) && T.isNotEmptyString(msg_payload.operation) && T.isArray(msg_payload.results) )
+					{
+						// DEBUG
+						console.log(context + ':produce_subscribe:handler for service response:socket_id=[%s] service=[%s] operation=[%s] results=[%a]', socket_id, msg_payload.service, msg_payload.operation, msg_payload.results)
+						
+						const iosrvs = this.get_runtime().socketio_servers
+						const svc_path = '/' + msg_payload.service
+
+						_.forEach(iosrvs,
+							(iosrv)=>{
+								console.log('svc_path=[%s],socket_id=[%s], iosrv.of(svc_path)=', svc_path, socket_id, iosrv.of(svc_path))
+								
+								if (svc_path in iosrv.nsps)
+								{
+									// console.log('iosrv.of(...).connected', iosrv.of(svc_path).connected)
+
+									if (socket_id in iosrv.of(svc_path).connected)
+									{
+										// console.log('iosrv.of(...).connected[socket_id]', iosrv.of(svc_path).connected[socket_id])
+
+										iosrv.of(svc_path).connected[socket_id].emit(msg_payload.operation, msg_payload)
+									}
+								}
+							}
+						)
+
+						return
+					}
+
+					// OTHERS CASES
+					const payload = { service:this.service.get_name(), operation:'devapt-msg-subscription', results:['done', arg_msg] }
+					
+					// DEBUG
+					console.log(context + ':produce_subscribe:default handler:socket_id=[%s] service=[%s] operation=[%s] results=[%a]', socket_id, payload.service, payload.operation, payload.results)
+
+					socket.emit('devapt-msg-subscription', payload)
 				}
 			}
 
+			node.get_msg_bus().msg_add_recipient(sender, 'browser')
+			
 			this._msg_subscriptions[sender][bus][channel].unsubscribe = node.get_msg_bus().msg_subscribe(channel, handler, sender)
 			
 			// UNSUBSCRIBE ON SOCKET CLOSE
@@ -396,6 +440,8 @@ export default class MessagesSvcProvider extends ServiceProvider
 				}
 				node.get_msg_bus().msg_remove_recipient(sender)
 			})
+
+			response.set_results([])
 
 			this.leave_group('produce_subscribe:operation[' + operation + '] for bus=[messages] for sender [' + sender + ']')
 			return Promise.resolve(response)

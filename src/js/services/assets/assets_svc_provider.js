@@ -1,5 +1,5 @@
 // NPM IMPORTS
-import assert from 'assert'
+// import assert from 'assert'
 
 // COMMON IMPORTS
 import T               from 'devapt-core-common/dist/js/utils/types'
@@ -10,12 +10,13 @@ import ServiceResponse from 'devapt-core-common/dist/js/services/service_respons
 import ExecutableRouteAssets from './executable_route_assets'
 
 
-let context = 'services/assets/assets_svc_provider'
+const context = 'services/assets/assets_svc_provider'
 
 
 
 /**
  * Assets service provider class.
+ * 
  * @author Luc BORIES
  * @license Apache-2.0
  */
