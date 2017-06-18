@@ -3,6 +3,7 @@ import assert from 'assert'
 
 // COMMON IMPORTS
 import T                from 'devapt-core-common/dist/js/utils/types'
+import Credentials      from 'devapt-core-common/dist/js/base/credentials'
 import RenderingBuilder from 'devapt-core-common/dist/js/rendering/rendering_builder'
 import {get_runtime} from 'devapt-core-common/dist/js/base/runtime'
 const runtime = get_runtime()
@@ -38,7 +39,7 @@ export default class ExecutableRouteMiddleware extends ExecutableRoute
      * Callback for route handling.
      * @override
 	 * 
-     * @param {object} arg_application - Application instance.
+     * @param {TopologyDefineApplication} arg_application - Application instance.
      * @param {object} arg_cfg_route - plain object route configuration.
      * @param {object} arg_data - plain object contextual datas.
 	 * 
@@ -55,6 +56,10 @@ export default class ExecutableRouteMiddleware extends ExecutableRoute
 			return this.get_route_redirect_cb(arg_application, arg_cfg_route, arg_data)
 		}
 		
+
+		// DEBUG
+		// debugger
+
 		
 		// GET ASSETS CONFIG
 		const assets_for_region = this.service.get_assets_services_names('any')
@@ -113,8 +118,18 @@ export default class ExecutableRouteMiddleware extends ExecutableRoute
 					// console.log(req.devapt_assets_services, 'get_route_cb:mw:req.devapt_assets_services')
 					const renderer = new RenderingBuilder(runtime, req.devapt_assets_services.style, req.devapt_assets_services.script, req.devapt_assets_services.image, req.devapt_assets_services.html, arg_application)
 					
+					const default_credentials = Credentials.get_empty_credentials()
+					default_credentials.tenant = arg_application.topology_tenant
+					default_credentials.env = 'default' // TODO arg_application.topology_env
+					default_credentials.application = arg_application.get_name()
+					default_credentials.token = 'default'
+					default_credentials.user_name = 'default'
+					default_credentials.user_pass_digest = 'default'
+					default_credentials.ts_login = 1234567890
+					default_credentials.ts_expiration = 9999999999
+					const credentials = req.devapt_credentials ? req.devapt_credentials : new Credentials(default_credentials)
+
 					const title = undefined
-					const credentials = req.devapt_credentials
 					const view_name = arg_cfg_route.page_view
 					const menubar_name = T.isString(arg_cfg_route.page_menubar) ? arg_cfg_route.page_menubar : undefined
 
