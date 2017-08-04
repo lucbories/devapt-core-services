@@ -1,7 +1,7 @@
 {
   "name": "devapt-core-services",
   "version": "2.0.0",
-  "description": "Developpers Application Toolkit - build application (backend, frontend, RESTfull, API, distributed nodes, reactive...) from configuration",
+  "description": "Developpers Application Toolkit - application standard services (ping, messaging, resources...)",
   "author": {
     "name": "Luc BORIES",
     "email": "luc.bories@gmail.com",
@@ -42,7 +42,8 @@
     "reactive",
     "declarative",
     "distributed",
-    "responsive"
+    "responsive",
+    "services"
   ],
   "dependencies": {
     "async": ">=1.0.0",
