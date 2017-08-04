@@ -62,8 +62,12 @@ export default class PingSvcProvider extends ServiceProvider
 	 */
 	produce(arg_request)
 	{
+		this.enter_group('produce')
+
 		if ( ! T.isObject(arg_request) || ! arg_request.is_service_request)
 		{
+			this.leave_group('produce:bad request object')
+
 			return Promise.resolve({error:'bad request object'})
 		}
 
@@ -71,24 +75,35 @@ export default class PingSvcProvider extends ServiceProvider
 		const operands  = arg_request.get_operands()
 		const target    = operands.length > 0 && T.isNotEmptyString(operands[0]) ? operands[0] : undefined
 
+		// DEBUG
+		this.debug('produce:request for service=' + this.service.get_name() + ':operation=' + operation)
 		// console.log(context + ':produce:request for service=' + this.service.get_name() + ':operation=' + operation)
 
 		if (operation == 'devapt-ping')
 		{
-			console.log(context + ':produce:process for service=' + this.service.get_name() + ':operation=' + operation)
+			// DEBUG
+			this.debug('produce:process for service=' + this.service.get_name() + ':operation=' + operation)
+			// console.log(context + ':produce:process for service=' + this.service.get_name() + ':operation=' + operation)
 
 			if (! target/* || target == this.get_runtime().node.get_name()*/)
 			{
-				console.log(context + ':produce:reply for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
+				// DEBUG
+				this.debug('produce:reply for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
+				// console.log(context + ':produce:reply for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
 				
 				const response  = new ServiceResponse(arg_request)
 				response.set_results(['devapt-pong'])
+
+				this.leave_group('produce:locally resolved')
 				return Promise.resolve(response)
 			}
 			
 			const work = (resolve/*, reject*/)=>{
 				const response  = new ServiceResponse(arg_request)
-				console.log(context + ':produce:forward request for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
+
+				// DEBUG
+				this.enter_group('produce:forward request for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
+				// console.log(context + ':produce:forward request for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
 				
 				const plain_object_payload = arg_request.get_properties_values()
 				plain_object_payload.socket_id = arg_request.get_socket().id
@@ -103,6 +118,7 @@ export default class PingSvcProvider extends ServiceProvider
 				}
 			}
 			
+			this.leave_group('produce:forward request')
 			return new Promise(work)
 		}
 

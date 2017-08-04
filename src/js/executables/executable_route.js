@@ -121,7 +121,6 @@ export default class ExecutableRoute extends Executable
 			cfg_route.route_regexp = undefined
 			if ( app_route.indexOf('.*') > -1 || app_route.indexOf('$') > -1 || app_route.indexOf('^') > -1 )
 			{
-				// cfg_route.full_route = route_is_global ? app_route : app_url + '/'
 				cfg_route.route_regexp = new RegExp( app_route.replace('/', '\/') )
 			}
 			

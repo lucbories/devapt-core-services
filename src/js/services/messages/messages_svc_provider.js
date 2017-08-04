@@ -97,6 +97,8 @@ export default class MessagesSvcProvider extends ServiceProvider
 		const operation = arg_request.get_operation()
 		const operands = arg_request.get_operands()
 
+		// DEBUG
+		this.debug('produce:request for service=' + this.service.get_name() + ':operation=' + operation)
 		// console.log(context + ':produce:request for service=' + this.service.get_name() + ':operation=' + operation)
 
 		// GET BUSES
@@ -178,6 +180,8 @@ export default class MessagesSvcProvider extends ServiceProvider
 
 			response.set_results(buses)
 
+			// DEBUG
+			this.debug('produce:reply for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
 			// console.log(context + ':produce:reply for service=' + this.service.get_name() + ':operation=' + operation, response.get_properties_values())
 
 			this.leave_group('produce:operation[' + operation + ']')
@@ -385,21 +389,24 @@ export default class MessagesSvcProvider extends ServiceProvider
 					if ( T.isNotEmptyString(msg_payload.service) && T.isNotEmptyString(msg_payload.operation) && T.isArray(msg_payload.results) )
 					{
 						// DEBUG
-						console.log(context + ':produce_subscribe:handler for service response:socket_id=[%s] service=[%s] operation=[%s] results=[%a]', socket_id, msg_payload.service, msg_payload.operation, msg_payload.results)
+						// console.log(context + ':produce_subscribe:handler for service response:socket_id=[%s] service=[%s] operation=[%s] results=[%a]', socket_id, msg_payload.service, msg_payload.operation, msg_payload.results)
 						
 						const iosrvs = this.get_runtime().socketio_servers
 						const svc_path = '/' + msg_payload.service
 
 						_.forEach(iosrvs,
 							(iosrv)=>{
-								console.log('svc_path=[%s],socket_id=[%s], iosrv.of(svc_path)=', svc_path, socket_id, iosrv.of(svc_path))
+								// DEBUG
+								// console.log('svc_path=[%s],socket_id=[%s], iosrv.of(svc_path)=', svc_path, socket_id, iosrv.of(svc_path))
 								
 								if (svc_path in iosrv.nsps)
 								{
+									// DEBUG
 									// console.log('iosrv.of(...).connected', iosrv.of(svc_path).connected)
 
 									if (socket_id in iosrv.of(svc_path).connected)
 									{
+										// DEBUG
 										// console.log('iosrv.of(...).connected[socket_id]', iosrv.of(svc_path).connected[socket_id])
 
 										iosrv.of(svc_path).connected[socket_id].emit(msg_payload.operation, msg_payload)
@@ -415,7 +422,7 @@ export default class MessagesSvcProvider extends ServiceProvider
 					const payload = { service:this.service.get_name(), operation:'devapt-msg-subscription', results:['done', arg_msg] }
 					
 					// DEBUG
-					console.log(context + ':produce_subscribe:default handler:socket_id=[%s] service=[%s] operation=[%s] results=[%a]', socket_id, payload.service, payload.operation, payload.results)
+					// console.log(context + ':produce_subscribe:default handler:socket_id=[%s] service=[%s] operation=[%s] results=[%a]', socket_id, payload.service, payload.operation, payload.results)
 
 					socket.emit('devapt-msg-subscription', payload)
 				}

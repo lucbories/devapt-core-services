@@ -147,21 +147,36 @@ export default class ExecutableRouteAssets extends ExecutableRoute
 							'x-sent': true
 						}
 					}
-					
-					res.sendFile(asset_file_path, options,
-						(err) => {
-							if (err)
-							{
-								console.log(err)
-								res.status(err.status).end()
+
+					try
+					{
+						res.sendFile(asset_file_path, options,
+							(err) => {
+								if (err)
+								{
+									console.log(context + ':MIDDLEWARE: ROUTE FOR ASSETS IN PLUGINS MODE:error=[%s]\n plugin=[%s]\n file=[%s]', err, plugin_name, asset_file_path)
+									res.status(err.status).end()
+								}
+								else
+								{
+									console.log(context + ':MIDDLEWARE: ROUTE FOR ASSETS IN PLUGINS MODE:Sent file=[%s]', asset_file_path)
+								}
 							}
-							else
-							{
-								console.log(context + ':Sent:', asset_file_path)
-							}
+						)
+					}
+					catch(err)
+					{
+						res.status(404)
+						const error = {
+							error:err,
+							plugin:plugin_name,
+							asset:asset_name,
+							file:asset_file_path
 						}
-					)
-					
+						res.type('json')
+						res.send(error)
+					}
+
 					return
 				}
 			}
