@@ -1,10 +1,16 @@
+// NPM IMPORTS
+
 // SERVER IMPORTS
 import BaseService from '../base/base_service'
 import SecuritySvcProvider from './security_svc_provider'
 import SecuritySvcConsumer from './security_svc_consumer'
 
 
-let context = 'server/services/security/security_service'
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
+const context = 'server/services/security/security_service'
 
 
 
@@ -27,7 +33,11 @@ export default class SecurityService extends BaseService
 	constructor(arg_svc_name, arg_service_settings, arg_context)
 	{
 		super(arg_svc_name, arg_service_settings, arg_context ? arg_context : context)
-		
+
+		/**
+		 * Class test flag.
+		 * @type {boolean}
+		 */
 		this.is_security_service = true
 	}
 	

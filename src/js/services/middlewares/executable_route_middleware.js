@@ -6,12 +6,23 @@ import T                from 'devapt-core-common/dist/js/utils/types'
 import Credentials      from 'devapt-core-common/dist/js/base/credentials'
 import RenderingBuilder from 'devapt-core-common/dist/js/rendering/rendering_builder'
 import {get_runtime} from 'devapt-core-common/dist/js/base/runtime'
-const runtime = get_runtime()
 
 // SERVER IMPORTS
 import ExecutableRoute  from '../../executables/executable_route'
 
 
+/**
+ * Runtime instance.
+ * @private
+ * @type {RuntimeBase}
+ */
+const runtime = get_runtime()
+
+
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
 const context = 'services/middlewares/executable_route_middleware'
 
 

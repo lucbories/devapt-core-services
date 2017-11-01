@@ -1,13 +1,27 @@
 // NPM IMPORTS
-import T from 'typr'
 import assert from 'assert'
+
+// COMMON IMPORTS
+import T from 'devapt-core-common/dist/js/utils/types'
+import {get_runtime} from 'devapt-core-common/dist/js/base/runtime'
 
 // SERVER IMPORTS
 import SocketIOServiceProvider from '../base/socketio_service_provider'
-import runtime from '../../base/runtime'
 
 
-let context = 'server/services/security/security_svc_provider'
+/**
+ * Runtime instance.
+ * @private
+ * @type {RuntimeBase}
+ */
+const runtime = get_runtime()
+
+
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
+const context = 'server/services/security/security_svc_provider'
 
 
 

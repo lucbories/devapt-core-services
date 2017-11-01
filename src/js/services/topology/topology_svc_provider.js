@@ -9,20 +9,64 @@ import ServiceResponse from 'devapt-core-common/dist/js/services/service_respons
 // SERVICES IMPORTS
 
 
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
 const context = 'services/topology/topology_svc_provider'
 
+/**
+ * Operation name.
+ * @private
+ */
 const GET_TENANTS_NAMES ='devapt-deployed-tenants-names'
+/**
+ * Operation name.
+ * @private
+ */
 const GET_TENANTS_INFOS ='devapt-deployed-tenants-infos'
+/**
+ * Operation name.
+ * @private
+ */
 const GET_TENANT_INFOS = 'devapt-deployed-tenant-infos'
 
+/**
+ * Operation name.
+ * @private
+ */
 const GET_TENANT_APPLICATIONS_NAMES = 'devapt-deployed-applications-names'
+/**
+ * Operation name.
+ * @private
+ */
 const GET_TENANT_APPLICATIONS_INFOS = 'devapt-deployed-applications-infos'
+/**
+ * Operation name.
+ * @private
+ */
 const GET_TENANT_APPLICATION_INFOS = 'devapt-deployed-application-infos'
 
+/**
+ * Operation name.
+ * @private
+ */
 const GET_TENANT_SERVICES_NAMES = 'devapt-deployed-services-names'
+/**
+ * Operation name.
+ * @private
+ */
 const GET_TENANT_SERVICES_INFOS = 'devapt-deployed-services-infos'
+/**
+ * Operation name.
+ * @private
+ */
 const GET_TENANT_SERVICE_INFOS = 'devapt-deployed-service-infos'
 
+/**
+ * Operation name.
+ * @private
+ */
 const GET_NODES_NAMES = 'devapt-deployed-nodes'
 
 
@@ -47,6 +91,10 @@ export default class TopologySvcProvider extends ServiceProvider
 	{
 		super(arg_provider_name, arg_service_instance, arg_context)
 
+		/**
+		 * Class test flag.
+		 * @type {boolean}
+		 */
 		this.is_topology_svc_provider = true
 	}
 
@@ -163,6 +211,8 @@ export default class TopologySvcProvider extends ServiceProvider
 
 	/**
 	 * Get deployed nodes.
+	 * 
+	 * @returns {array}
 	 */
 	get_deployed_nodes_topology()
 	{

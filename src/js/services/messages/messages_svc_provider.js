@@ -1,5 +1,4 @@
 // NPM IMPORTS
-// import assert from 'assert'
 import _ from 'lodash'
 
 // COMMON IMPORTS
@@ -9,11 +8,14 @@ import ServiceResponse    from 'devapt-core-common/dist/js/services/service_resp
 import DistributedMessage from 'devapt-core-common/dist/js/base/distributed_message'
 import DistributedLogs    from 'devapt-core-common/dist/js/base/distributed_logs'
 import DistributedMetrics from 'devapt-core-common/dist/js/base/distributed_metrics'
-// import Stream             from 'devapt-core-common/dist/js/messaging/stream'
 
 // SERVICES IMPORTS
 
 
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
 const context = 'services/messages/messages_svc_provider'
 
 
@@ -51,9 +53,18 @@ export default class MessagesSvcProvider extends ServiceProvider
 	constructor(arg_provider_name, arg_service_instance, arg_context=context)
 	{
 		super(arg_provider_name, arg_service_instance, arg_context)
-
+		
+		/**
+		 * Class test flag.
+		 * @type {boolean}
+		 */
 		this.is_messages_svc_provider = true
 
+		/**
+		 * Messages subscriptions.
+		 * @private
+		 * @type {object}
+		 */
 		this._msg_subscriptions = {}
 	}
 
@@ -226,7 +237,13 @@ export default class MessagesSvcProvider extends ServiceProvider
 	}
 
 
-
+	/**
+	 * Produce service datas on send request.
+	 * 
+	 * @param {ServiceRequest} arg_request - service request instance.
+	 * 
+	 * @returns {Promise} - promise of ServiceResponse instance.
+	 */
 	produce_send(arg_request)
 	{
 		this.enter_group('produce_send')
@@ -336,6 +353,13 @@ export default class MessagesSvcProvider extends ServiceProvider
 
 
 
+	/**
+	 * Produce service datas on subscribe request.
+	 * 
+	 * @param {ServiceRequest} arg_request - service request instance.
+	 * 
+	 * @returns {Promise} - promise of ServiceResponse instance.
+	 */
 	produce_subscribe(arg_request)
 	{
 		this.enter_group('produce_subscribe')
@@ -464,6 +488,16 @@ export default class MessagesSvcProvider extends ServiceProvider
 	}
 
 
+
+	/**
+	 * Test if a message subscription exists.
+	 * 
+	 * @param {string} arg_sender  - message sender name.
+	 * @param {string} arg_bus     - message bus name.
+	 * @param {string} arg_channel - message channel name.
+	 * 
+	 * @returns {boolean}
+	 */
 	has_subscription(arg_sender, arg_bus, arg_channel)
 	{
 		if (arg_sender in this._msg_subscriptions)
@@ -480,8 +514,19 @@ export default class MessagesSvcProvider extends ServiceProvider
 
 		return false
 	}
-
-
+	
+	
+	
+	/**
+	 * Test if a message subscription exists.
+	 * 
+	 * @param {string} arg_sender  - message sender name.
+	 * @param {string} arg_bus     - message bus name.
+	 * @param {string} arg_channel - message channel name.
+	 * @param {Socket} arg_socket  - subscription socket.
+	 * 
+	 * @returns {boolean}
+	 */
 	init_subscription(arg_sender, arg_bus, arg_channel, arg_socket)
 	{
 		let subscription = this._msg_subscriptions[arg_sender]
@@ -505,9 +550,16 @@ export default class MessagesSvcProvider extends ServiceProvider
 
 		return subscription
 	}
-
-
-
+	
+	
+	
+	/**
+	 * Produce service datas on unsubscribe request.
+	 * 
+	 * @param {ServiceRequest} arg_request - service request instance.
+	 * 
+	 * @returns {Promise} - promise of ServiceResponse instance.
+	 */
 	produce_unsubscribe(arg_request)
 	{
 		this.enter_group('produce_unsubscribe')

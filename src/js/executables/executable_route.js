@@ -2,16 +2,26 @@
 import assert from 'assert'
 
 // COMMON IMPORTS
-import T          from 'devapt-core-common/dist/js/utils/types'
-import Executable from 'devapt-core-common/dist/js/base/executable'
-import {get_runtime}    from 'devapt-core-common/dist/js/base/runtime'
-const runtime = get_runtime()
+import T             from 'devapt-core-common/dist/js/utils/types'
+import Executable    from 'devapt-core-common/dist/js/base/executable'
+import {get_runtime} from 'devapt-core-common/dist/js/base/runtime'
+
 
 // SERVER IMPORTS
 
 
-let context = 'services/executables/executable_route'
-console.log(context + ':HAS RUNTIME ?' + runtime ? 'yes' : 'no')
+/**
+ * Runtime instance.
+ * @private
+ * @type {RuntimeBase}
+ */
+const runtime = get_runtime()
+
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
+const context = 'services/executables/executable_route'
 
 
 
@@ -24,12 +34,25 @@ export default class ExecutableRoute extends Executable
 {
     /**
      * Create a ExecutableRoute instance.
-	 * @extends Executable
      * @abstract
      */
 	constructor()
 	{
 		super(context, runtime.get_logger_manager())
+		
+		/**
+		 * Executable settings.
+		 * @protected
+		 * @type {object}
+		 */
+		this.store_config = undefined
+		
+		/**
+		 * Executable server.
+		 * @protected
+		 * @type {object}
+		 */
+		this.server = undefined
 	}
 	
 	

@@ -10,6 +10,11 @@ import ServiceProvider from 'devapt-core-common/dist/js/services/service_provide
 import ServiceConsumer from 'devapt-core-common/dist/js/services/service_consumer_by_url'
 
 
+/**
+ * Default plugins name/class path map.
+ * @private
+ * @type {object}
+ */
 const default_plugins_map = {
 	'ping_svc':{
 		'provider':'devapt-core-services/dist/js/services/ping/ping_svc_provider'
@@ -41,6 +46,10 @@ const default_plugins_map = {
 // 'rest_api_resources_query': 'devapt-core-services/dist/js/services/resource/resources_service',
 // 'security':                 'devapt-core-services/dist/js/services/security/security_service'
 
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
 const context = 'services/default_plugins/services_default_plugin'
 
 
@@ -52,6 +61,14 @@ const context = 'services/default_plugins/services_default_plugin'
  */
 export default class DefaultServicesPlugin extends ServicesPlugin
 {
+	/**
+     * Create a DefaultServicesPlugin instance.
+	 * 
+	 * @param {RuntimeBase} arg_runtime - runtime instance.
+	 * @param {PluginsManager} arg_manager - plugins manager.
+	 * 
+	 * @returns {nothing}
+     */
 	constructor(arg_runtime, arg_manager)
 	{
 		assert( T.isObject(arg_runtime) && arg_runtime.is_base_runtime, context + ':constructor:bad runtime instance' )
@@ -59,6 +76,11 @@ export default class DefaultServicesPlugin extends ServicesPlugin
 
 		super(arg_runtime, arg_manager, 'DefaultServices', '1.0.0')
 
+		/**
+		 * Services classes.
+		 * @private
+		 * @type {object}
+		 */
 		this._services_classes = {}
 
 		// FILL SERVICES CLASSES
@@ -130,7 +152,15 @@ export default class DefaultServicesPlugin extends ServicesPlugin
 		)
 	}
 	
-	
+
+
+	/**
+     * Test if a feature class is known into self contained plugins.
+	 * 
+     * @param {string} arg_class_name - feature class name.
+	 * 
+     * @returns {boolean} feature class found or not.
+     */
 	has(arg_class_name)
 	{
 		return (arg_class_name in this._services_classes)
@@ -173,6 +203,13 @@ export default class DefaultServicesPlugin extends ServicesPlugin
 
 
 
+	/**
+     * Get a feature class.
+	 * 
+     * @param {string} arg_class_name - feature class name.
+	 * 
+     * @returns {object} feature class.
+     */
 	get_feature_class(arg_class_name)
 	{
 		assert( T.isString(arg_class_name), context + ':create:bad name string')

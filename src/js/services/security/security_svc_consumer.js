@@ -5,7 +5,11 @@ import assert from 'assert'
 import ServiceConsumer from '../base/service_consumer'
 
 
-let context = 'server/services/security/security_svc_consumer'
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
+const context = 'server/services/security/security_svc_consumer'
 
 
 

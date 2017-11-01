@@ -1,5 +1,4 @@
 // NPM IMPORTS
-// import assert from 'assert'
 import {format} from 'util'
 
 // COMMON IMPORTS
@@ -11,7 +10,11 @@ import DistributedMessage from 'devapt-core-common/dist/js/base/distributed_mess
 // SERVICES IMPORTS
 
 
-let context = 'services/ping/ping_svc_provider'
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
+const context = 'services/ping/ping_svc_provider'
 
 
 
@@ -35,6 +38,10 @@ export default class PingSvcProvider extends ServiceProvider
 	{
 		super(arg_provider_name, arg_service_instance, arg_context)
 
+		/**
+		 * Class test flag.
+		 * @type {boolean}
+		 */
 		this.is_ping_svc_provider = true
 	}
 

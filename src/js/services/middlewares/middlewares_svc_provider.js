@@ -12,7 +12,11 @@ import RenderingBuilder from 'devapt-core-common/dist/js/rendering/rendering_bui
 import ExecutableRouteMiddleware from './executable_route_middleware'
 
 
-let context = 'server/services/middlewares/middlewares_svc_provider'
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
+const context = 'server/services/middlewares/middlewares_svc_provider'
 
 
 
@@ -37,8 +41,16 @@ export default class MiddlewaresSvcProvider extends ServiceProvider
 	{
 		super(arg_provider_name, arg_service_instance, arg_context ? arg_context : context)
 		
+		/**
+		 * Class test flag.
+		 * @type {boolean}
+		 */
 		this.is_middleware_svc_provider = true
 		
+		/**
+		 * Service executable instance.
+		 * @type {Executable}
+		 */
 		this.exec = new ExecutableRouteMiddleware()
 		this.exec.service = this.service
 	}

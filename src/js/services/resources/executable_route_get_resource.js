@@ -5,13 +5,24 @@ import fs from 'fs'
 // COMMON IMPORTS
 import T             from 'devapt-core-common/dist/js/utils/types'
 import {get_runtime} from 'devapt-core-common/dist/js/base/runtime'
-const runtime = get_runtime()
 
 // SERVICES IMPORTS
 import ExecutableRoute from '../../executables/executable_route'
 
 
-let context = 'server/services/base/executable_route_get_resources'
+/**
+ * Runtime instance.
+ * @private
+ * @type {RuntimeBase}
+ */
+const runtime = get_runtime()
+
+
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
+const context = 'server/services/base/executable_route_get_resources'
 
 
 

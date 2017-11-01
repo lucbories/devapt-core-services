@@ -1,5 +1,4 @@
 // NPM IMPORTS
-// import assert from 'assert'
 
 // COMMON IMPORTS
 import T               from 'devapt-core-common/dist/js/utils/types'
@@ -10,6 +9,10 @@ import ServiceResponse from 'devapt-core-common/dist/js/services/service_respons
 import ExecutableRouteAssets from './executable_route_assets'
 
 
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
 const context = 'services/assets/assets_svc_provider'
 
 
@@ -35,8 +38,16 @@ export default class AssetsSvcProvider extends ServiceProvider
 	{
 		super(arg_provider_name, arg_service_instance, arg_context)
 
+		/**
+		 * Class test flag.
+		 * @type {boolean}
+		 */
 		this.is_assets_svc_provider = true
 		
+		/**
+		 * Executable instance.
+		 * @type {Executable}
+		 */
 		this.exec = new ExecutableRouteAssets()
 	}
 

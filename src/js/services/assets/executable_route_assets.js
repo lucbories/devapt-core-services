@@ -4,13 +4,23 @@ import assert from 'assert'
 // COMMON IMPORTS
 import T             from 'devapt-core-common/dist/js/utils/types'
 import {get_runtime} from 'devapt-core-common/dist/js/base/runtime'
-const runtime = get_runtime()
 
 // SERVER IMPORTS
 import ExecutableRoute from '../../executables/executable_route'
 
 
-let context = 'server/services/base/executable_route_assets'
+/**
+ * Runtime instance.
+ * @private
+ * @type {RuntimeBase}
+ */
+const runtime = get_runtime()
+
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
+const context = 'server/services/base/executable_route_assets'
 
 
 
@@ -23,7 +33,6 @@ export default class ExecutableRouteAssets extends ExecutableRoute
 {
 	/**
 	 * Create an assets route registering executable.
-	 * @extends ExecutableRoute
 	 * 
 	 * @returns {nothing}
 	 */

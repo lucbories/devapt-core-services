@@ -9,6 +9,10 @@ import ServiceResponse from 'devapt-core-common/dist/js/services/service_respons
 // SERVICES IMPORTS
 
 
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
 const context = 'services/logs/logs_svc_provider'
 
 
@@ -33,9 +37,17 @@ export default class LogsSvcProvider extends ServiceProvider
 	{
 		super(arg_provider_name, arg_service_instance, arg_context)
 
+		/**
+		 * Class test flag.
+		 * @type {boolean}
+		 */
 		this.is_logs_svc_provider = true
 		
 		// GET INPUT STREAM TO FORWARD TO SUBSCRIBERS
+		/**
+		 * Logs bus stream.
+		 * @type {Stream}
+		 */
 		this.logs_bus_stream = this.get_runtime().node.get_logs_bus().get_input_stream()
 		this.init_logs_bus_stream()
 
@@ -96,6 +108,11 @@ export default class LogsSvcProvider extends ServiceProvider
 	
 	
 	
+	/**
+	 * Initialize bus stream.
+	 * 
+	 * @returns {nothing}
+	 */
 	init_logs_bus_stream()
 	{
 		const max_logs_per_msg = 10

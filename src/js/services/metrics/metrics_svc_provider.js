@@ -1,5 +1,4 @@
 // NPM IMPORTS
-// import assert from 'assert'
 import {format} from 'util'
 
 // COMMON IMPORTS
@@ -7,11 +6,21 @@ import T                  from 'devapt-core-common/dist/js/utils/types'
 import ServiceProvider    from 'devapt-core-common/dist/js/services/service_provider'
 import ServiceResponse    from 'devapt-core-common/dist/js/services/service_response'
 import {get_runtime}      from 'devapt-core-common/dist/js/base/runtime'
-const runtime = get_runtime()
 
 // SERVICES IMPORTS
 
 
+/**
+ * Runtime instance.
+ * @private
+ * @type {RuntimeBase}
+ */
+const runtime = get_runtime()
+
+/**
+ * Contextual constant for this file logs.
+ * @private
+ */
 const context = 'services/metrics/metrics_svc_provider'
 
 
@@ -38,6 +47,10 @@ export default class MetricsSvcProvider extends ServiceProvider
 	{
 		super(arg_provider_name, arg_service_instance, arg_context)
 
+		/**
+		 * Class test flag.
+		 * @type {boolean}
+		 */
 		this.is_metrics_svc_provider = true
 
 		// CREATE STREAMS
@@ -49,7 +62,18 @@ export default class MetricsSvcProvider extends ServiceProvider
 		// }
 
 		// GET NODE METRICS BUS
+		/**
+		 * Metrics bus stream.
+		 * @private
+		 * @type {Stream}
+		 */
 		this._metrics_bus_stream = runtime.node.get_metrics_bus().get_input_stream()
+		
+		/**
+		 * Metrics bus transformed stream.
+		 * @private
+		 * @type {Stream}
+		 */
 		this._metrics_bus_stream_transformed = undefined
 		
 		// DEBUG STREAM
