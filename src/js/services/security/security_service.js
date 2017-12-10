@@ -9,6 +9,7 @@ import SecuritySvcConsumer from './security_svc_consumer'
 /**
  * Contextual constant for this file logs.
  * @private
+ * @type {string}
  */
 const context = 'server/services/security/security_service'
 

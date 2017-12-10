@@ -144,7 +144,7 @@ export default class ExecutableRouteMiddleware extends ExecutableRoute
 					const view_name = arg_cfg_route.page_view
 					const menubar_name = T.isString(arg_cfg_route.page_menubar) ? arg_cfg_route.page_menubar : undefined
 
-					const html = renderer.render_html_page(title, view_name, menubar_name, credentials)
+					const html = renderer.render_html_page(title, view_name, menubar_name, credentials, req.devapt_assets_services)
 
 					// MANAGE ERROR
 					if (! T.isString(html) )
