@@ -1,6 +1,6 @@
 {
   "name": "devapt-core-services",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Developpers Application Toolkit - application standard services (ping, messaging, resources...)",
   "author": {
     "name": "Luc BORIES",
@@ -42,8 +42,7 @@
     "save-develop": "git commit -am && git push services develop",
     "save-master": "npm run merge && git checkout develop"
   },
-  "browser": [
-  ],
+  "browser": [],
   "keywords": [
     "server",
     "browser",
