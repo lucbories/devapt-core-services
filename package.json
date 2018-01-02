@@ -1,6 +1,6 @@
 {
   "name": "devapt-core-services",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Developpers Application Toolkit - application standard services (ping, messaging, resources...)",
   "author": {
     "name": "Luc BORIES",
@@ -26,22 +26,39 @@
   },
   "scripts": {
     "build": "gulp",
-    "test": "mocha --recursive --reporter spec --compilers js:babel-register src/js/test"
+    "assets": "",
+    "resources": "",
+    "bundle": "unix2dos package.json",
+    "test": "",
+    "test:todo": "mocha --recursive --reporter spec --compilers js:babel-register src/test",
+    "test:empty": "mocha --reporter spec --compilers js:babel-register",
+    "test:watch": "npm run test -- --watch",
+    "release-develop": "npm run build && npm run test && git commit -am $npm_package_version && git push services develop",
+    "release-master": "npm run merge && git tag $npm_package_version && git push --tags services master && npm publish && git checkout develop",
+    "patch": "npm version patch && unix2dos package.json",
+    "minor": "npm version minor && unix2dos package.json",
+    "major": "npm version major && unix2dos package.json",
+    "merge": "git checkout master && git merge develop && git push services master",
+    "save-develop": "git commit -am && git push services develop",
+    "save-master": "npm run merge && git checkout develop"
   },
   "browser": [
   ],
   "keywords": [
     "server",
+    "browser",
+    "backend",
+    "frontend",
     "api",
     "rest",
     "devapt",
     "toolkit",
-    "redux",
+    "stateful",
+    "responsive",
     "reactive",
     "declarative",
     "distributed",
-    "responsive",
-    "services"
+    "redux"
   ],
   "dependencies": {
     "devapt-core-common": ">=2.0.0",
