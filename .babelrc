@@ -1,5 +1,5 @@
 {
-  "presets": [],
+  "presets": ["env"],
   "ignore": [],
-  "plugins":["transform-es2015-modules-commonjs"]
+  "plugins":[]
 }

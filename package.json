@@ -39,7 +39,7 @@
     "minor": "npm version minor && unix2dos package.json",
     "major": "npm version major && unix2dos package.json",
     "merge": "git checkout master && git merge develop && git push services master",
-    "save-develop": "git commit -am && git push services develop",
+    "save-develop": "git commit -am \"save current changes\" && git push services develop",
     "save-master": "npm run merge && git checkout develop"
   },
   "browser": [],
