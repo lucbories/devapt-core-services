@@ -1,7 +1,13 @@
 {
+<<<<<<< HEAD
   "presets": ["@babel/preset-env"],
   "ignore": [],
   "plugins":[
     ["@babel/plugin-transform-react-jsx", { "pragma": "h" }]
   ]
+=======
+  "presets": ["env"],
+  "ignore": [],
+  "plugins":[]
+>>>>>>> b05e9b665fe54c6e8f6fc371e9b7ca25ca9e1d76
 }
