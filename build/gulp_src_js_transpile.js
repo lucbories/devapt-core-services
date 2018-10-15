@@ -7,7 +7,11 @@ var DST_DIR  = 'dist/js'
 
 
 const BABEL_CONFIG = {
-	presets: ['es2015']
+	"presets": ["@babel/preset-env"],
+	"ignore": [],
+	"plugins":[
+	  ["@babel/plugin-transform-react-jsx", { "pragma": "h" }]
+	]
 }
 
 
